@@ -728,6 +728,8 @@
           <span class="mode-label" id="modeLabel"></span>
           <span class="timer-pill hidden" id="timerLabel"></span>
           <button type="button" class="btn-ghost" id="exportBtn">Export AI deck</button>
+          <button type="button" class="btn-icon" id="ttsToggleBtn" aria-label="Toggle question speech" title="Read questions aloud">🔇</button>
+          <button type="button" class="btn-icon" id="ttsReplayBtn" aria-label="Replay question" title="Replay this question" disabled>⟲</button>
         </div>
       </section>
     </main>
@@ -1358,7 +1360,9 @@
         allowDarkThemes: true,
         safetyLevel: SafetyLevel.BALANCED,
         gameMode: GameMode.EVERYONE
-      }
+      },
+      speechEnabled: false,
+      lastSpokenText: ''
     };
 
     const els = {
@@ -1392,8 +1396,33 @@
       apiKeyRemember: document.getElementById('apiKeyRemember'),
       apiKeyCloseBtn: document.getElementById('apiKeyCloseBtn'),
       apiKeyCancelBtn: document.getElementById('apiKeyCancelBtn'),
-      apiKeySaveBtn: document.getElementById('apiKeySaveBtn')
+      apiKeySaveBtn: document.getElementById('apiKeySaveBtn'),
+      ttsToggleBtn: document.getElementById('ttsToggleBtn'),
+      ttsReplayBtn: document.getElementById('ttsReplayBtn')
     };
+
+    let ttsAudio = null;
+    let ttsObjectUrl = null;
+
+    function ensureTtsAudio() {
+      if (!ttsAudio) {
+        ttsAudio = new Audio();
+      }
+      return ttsAudio;
+    }
+
+    function revokeTtsUrl() {
+      if (ttsObjectUrl) {
+        URL.revokeObjectURL(ttsObjectUrl);
+        ttsObjectUrl = null;
+      }
+    }
+
+    function updateTtsUI() {
+      if (!els.ttsToggleBtn || !els.ttsReplayBtn) return;
+      els.ttsToggleBtn.textContent = state.speechEnabled ? '🔊' : '🔇';
+      els.ttsReplayBtn.disabled = !state.lastSpokenText;
+    }
 
     function initCategories() {
       const catSet = new Set();
@@ -1487,11 +1516,19 @@
         els.favoriteBtn.textContent = '☆';
       }
 
+      state.lastSpokenText = q.text;
+      updateTtsUI();
+      if (state.speechEnabled) {
+        speakCurrentQuestion();
+      }
+
       setStatus({
         label: 'Ready',
         text: '',
         mode: 'idle'
       });
+
+      updateTtsUI();
     }
 
     function setGenerating(isOn) {
@@ -1599,6 +1636,9 @@ Each question must:
 - You may touch on sex, gender, identity, relationships, and violence in a thoughtful, non-graphic way, but avoid explicit sexual detail and avoid self-harm themes.
 - Stand alone without referencing previous questions.
 - Feel meaningfully different in focus from a typical "what are you most afraid of" or "who do you have a crush on" style question.
+- Be written in simple, conversational language that is easy to scan.
+- Be only 1–2 short sentences (ideally 25 words or fewer).
+- Avoid long setups, stacked clauses, or extra explanation. Go straight to the heart of the question.
 
 For this question, lean slightly toward the following style hints without mentioning them out loud to the player:
 ${styleHintsText}
@@ -1608,6 +1648,7 @@ ${examplesText}
 
 Within the requested category, vary the kind of situation or angle you ask about (for example: choices, memories, tensions, what-ifs, tradeoffs, secret wishes, moral dilemmas, playful hypotheticals) instead of repeating one pattern.
 Use the requested category as a gentle theme (especially if it is not "All categories") but you do NOT need to mention the category name itself in the wording.
+Make the wording tight and easy to read while keeping the same depth of intent.
 Return exactly ONE question, with no numbering, quotes, or extra commentary.`;
 
         const apiKey = await getApiKeyFromUser();
@@ -1679,6 +1720,49 @@ Return exactly ONE question, with no numbering, quotes, or extra commentary.`;
       } finally {
         setGenerating(false);
       }
+    }
+
+    async function speakTextWithOpenAI(text) {
+      if (!text || !window.fetch) return;
+
+      const apiKey = await getApiKeyFromUser();
+      if (!apiKey) {
+        return;
+      }
+
+      const body = {
+        model: 'gpt-4o-mini-tts',
+        input: text,
+        voice: 'alloy',
+        format: 'mp3'
+      };
+
+      const response = await fetch('https://api.openai.com/v1/audio/speech', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ' + apiKey
+        },
+        body: JSON.stringify(body)
+      });
+
+      if (!response.ok) {
+        return;
+      }
+
+      const arrayBuffer = await response.arrayBuffer();
+      const blob = new Blob([arrayBuffer], { type: 'audio/mpeg' });
+      revokeTtsUrl();
+      ttsObjectUrl = URL.createObjectURL(blob);
+
+      const audioEl = ensureTtsAudio();
+      audioEl.src = ttsObjectUrl;
+      audioEl.play().catch(() => {});
+    }
+
+    function speakCurrentQuestion() {
+      if (!state.lastSpokenText) return;
+      speakTextWithOpenAI(state.lastSpokenText);
     }
 
     function handleCategoryChange(evt) {
@@ -1870,6 +1954,24 @@ Return exactly ONE question, with no numbering, quotes, or extra commentary.`;
         closeApiKeyModal();
         resolvePendingKey(cachedApiKey);
       });
+
+      if (els.ttsToggleBtn) {
+        els.ttsToggleBtn.addEventListener('click', () => {
+          state.speechEnabled = !state.speechEnabled;
+          updateTtsUI();
+          if (state.speechEnabled && state.currentQuestion) {
+            speakCurrentQuestion();
+          }
+        });
+      }
+
+      if (els.ttsReplayBtn) {
+        els.ttsReplayBtn.addEventListener('click', () => {
+          if (state.lastSpokenText) {
+            speakCurrentQuestion();
+          }
+        });
+      }
 
       window.addEventListener('keyup', handleKeyUp);
 
