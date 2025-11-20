@@ -738,23 +738,21 @@
           <span id="statusLabel">Ready</span>
         </div>
         <div class="status-text" id="statusText">
-          Status messages and mode indicators appear here.
+          Status messages appear here.
         </div>
         <div class="status-extra">
           <div class="source-pill" id="sourcePill" title="Seeded questions live in this HTML file. AI-generated questions are stored only in this browser and are not written back into the file.">
             <span class="source-dot seeded" id="sourceDot"></span>
             <span id="sourceLabel">Seeded deck</span>
           </div>
-          <span class="mode-label" id="modeLabel"></span>
-          <span class="timer-pill hidden" id="timerLabel"></span>
           <button type="button" class="btn-ghost" id="exportBtn">Export AI deck</button>
           <button type="button" class="btn-icon" id="ttsToggleBtn" aria-label="Toggle question speech" title="Read questions aloud" data-state="off">
             <svg class="tts-icon tts-icon-off" viewBox="0 0 24 24" aria-hidden="true">
-              <path d="M4 10v4h3.5L12 18v-8L7.5 10H4z"></path>
+              <path d="M4 9v6h3l4 3V6L7 9H4z"></path>
               <path d="M16 9l4 6M20 9l-4 6" stroke-linecap="round"></path>
             </svg>
             <svg class="tts-icon tts-icon-on" viewBox="0 0 24 24" aria-hidden="true">
-              <path d="M4 10v4h3.5L12 18v-8L7.5 10H4z"></path>
+              <path d="M4 9v6h3l4 3V6L7 9H4z"></path>
               <path d="M15.5 9.5a4 4 0 010 5M17.5 8a7 7 0 010 8" stroke-linecap="round"></path>
             </svg>
           </button>
@@ -768,7 +766,7 @@
       </section>
     </main>
     <div class="version-cluster">
-      <div class="version-label">2025.11.20.1.0.1.0</div>
+      <div class="version-label">2025.11.20.1.0.1.2</div>
       <button type="button" class="version-help" aria-label="Keyboard and AI shortcuts">
         ?
         <span class="version-tooltip">Press Space or the Next button for a new card. On desktop, press G to ask the AI for a fresh question.</span>
@@ -797,17 +795,6 @@
             <button type="button" class="chip-option active" data-safety="Balanced">Balanced</button>
             <button type="button" class="chip-option" data-safety="Spicy">Spicy</button>
           </div>
-        </div>
-      </div>
-      <div class="modal-section">
-        <h3>Game mode</h3>
-        <div class="modal-row">
-          <select id="settingsGameMode">
-            <option value="everyone">Everyone answers</option>
-            <option value="pass">Pass the turn</option>
-            <option value="timed30">30-second spotlight</option>
-            <option value="timed60">60-second spotlight</option>
-          </select>
         </div>
       </div>
       <div class="modal-footer">
@@ -854,13 +841,6 @@
       LIGHT: 'Light',
       BALANCED: 'Balanced',
       SPICY: 'Spicy'
-    };
-
-    const GameMode = {
-      EVERYONE: 'everyone',
-      PASS: 'pass',
-      TIMED_30: 'timed30',
-      TIMED_60: 'timed60'
     };
 
     const BASE_CATEGORIES = [
@@ -1387,13 +1367,10 @@
       isGenerating: false,
       favorites: new Set(),
       history: [],
-      timerId: null,
-      timerRemaining: 0,
       settings: {
         allowSoftTaboo: true,
         allowDarkThemes: true,
-        safetyLevel: SafetyLevel.BALANCED,
-        gameMode: GameMode.EVERYONE
+        safetyLevel: SafetyLevel.BALANCED
       },
       speechEnabled: false,
       lastSpokenText: ''
@@ -1412,8 +1389,6 @@
       statusDot: document.getElementById('statusDot'),
       statusLabel: document.getElementById('statusLabel'),
       statusText: document.getElementById('statusText'),
-      modeLabel: document.getElementById('modeLabel'),
-      timerLabel: document.getElementById('timerLabel'),
       favoriteBtn: document.getElementById('favoriteBtn'),
       exportBtn: document.getElementById('exportBtn'),
       settingsBtn: document.getElementById('settingsBtn'),
@@ -1424,7 +1399,6 @@
       settingsSoftTaboo: document.getElementById('settingsSoftTaboo'),
       settingsDarkThemes: document.getElementById('settingsDarkThemes'),
       settingsSafetyChips: document.getElementById('settingsSafetyChips'),
-      settingsGameMode: document.getElementById('settingsGameMode'),
       apiKeyBackdrop: document.getElementById('apiKeyBackdrop'),
       apiKeyInput: document.getElementById('apiKeyInput'),
       apiKeyRemember: document.getElementById('apiKeyRemember'),
@@ -1450,6 +1424,15 @@
       if (ttsObjectUrl) {
         URL.revokeObjectURL(ttsObjectUrl);
         ttsObjectUrl = null;
+      }
+    }
+
+    function stopTtsPlayback() {
+      if (!ttsAudio) return;
+      try {
+        ttsAudio.pause();
+        ttsAudio.currentTime = 0;
+      } catch (e) {
       }
     }
 
@@ -1495,8 +1478,7 @@
       if (state.currentQuestion) {
         pushToHistory(state.currentQuestion);
       }
-      state.currentQuestion = next;
-      renderQuestion(next);
+      presentQuestion(next);
     }
 
     function setStatus({ label, text, mode }) {
@@ -1508,25 +1490,6 @@
       } else if (mode === 'error') {
         els.statusDot.classList.add('error');
       }
-    }
-
-    function updateModeIndicator() {
-      let text = '';
-      switch (state.settings.gameMode) {
-        case GameMode.EVERYONE:
-          text = 'Mode: Everyone answers';
-          break;
-        case GameMode.PASS:
-          text = 'Mode: Pass the turn';
-          break;
-        case GameMode.TIMED_30:
-          text = 'Mode: 30-second spotlight';
-          break;
-        case GameMode.TIMED_60:
-          text = 'Mode: 60-second spotlight';
-          break;
-      }
-      els.modeLabel.textContent = text;
     }
 
     function renderQuestion(q) {
@@ -1552,13 +1515,6 @@
       } else {
         els.favoriteBtn.textContent = '☆';
       }
-
-      state.lastSpokenText = q.text;
-      updateTtsUI();
-      if (state.speechEnabled) {
-        speakCurrentQuestion();
-      }
-
       setStatus({
         label: 'Ready',
         text: '',
@@ -1566,6 +1522,33 @@
       });
 
       updateTtsUI();
+    }
+
+    function presentQuestion(q) {
+      if (!q) return;
+
+      state.currentQuestion = q;
+      state.lastSpokenText = q.text;
+      updateTtsUI();
+
+      if (!state.speechEnabled) {
+        renderQuestion(q);
+        return;
+      }
+
+      setStatus({
+        label: 'Thinking…',
+        text: '',
+        mode: 'busy'
+      });
+
+      speakTextWithOpenAI(q.text)
+        .then(() => {
+          renderQuestion(q);
+        })
+        .catch(() => {
+          renderQuestion(q);
+        });
     }
 
     function setGenerating(isOn) {
@@ -1745,8 +1728,7 @@ Return exactly ONE question, with no numbering, quotes, or extra commentary.`;
         if (state.currentQuestion) {
           pushToHistory(state.currentQuestion);
         }
-        state.currentQuestion = q;
-        renderQuestion(q);
+        presentQuestion(q);
       } catch (err) {
         console.error(err);
         setStatus({
@@ -1823,7 +1805,6 @@ Return exactly ONE question, with no numbering, quotes, or extra commentary.`;
       chips.forEach(chip => {
         chip.classList.toggle('active', chip.dataset.safety === state.settings.safetyLevel);
       });
-      els.settingsGameMode.value = state.settings.gameMode;
     }
 
     function closeSettingsModal() {
@@ -1837,11 +1818,6 @@ Return exactly ONE question, with no numbering, quotes, or extra commentary.`;
       if (activeChip && SafetyLevel[activeChip.dataset.safety.toUpperCase()]) {
         state.settings.safetyLevel = SafetyLevel[activeChip.dataset.safety.toUpperCase()];
       }
-      const gm = els.settingsGameMode.value;
-      if (GameMode[gm.toUpperCase()]) {
-        state.settings.gameMode = gm;
-      }
-      updateModeIndicator();
       rebuildDeck();
       pickNextQuestion();
     }
@@ -1871,36 +1847,7 @@ Return exactly ONE question, with no numbering, quotes, or extra commentary.`;
       return shuffle(favQs.filter(q => questionPassesSafety(q, settings)));
     }
 
-    function startTimerForMode() {
-      if (state.timerId) {
-        clearInterval(state.timerId);
-        state.timerId = null;
-      }
-      let seconds = 0;
-      if (state.settings.gameMode === GameMode.TIMED_30) {
-        seconds = 30;
-      } else if (state.settings.gameMode === GameMode.TIMED_60) {
-        seconds = 60;
-      } else {
-        els.timerLabel.classList.add('hidden');
-        return;
-      }
-
-      state.timerRemaining = seconds;
-      els.timerLabel.classList.remove('hidden');
-      els.timerLabel.textContent = `⏱ ${seconds}s`;
-
-      state.timerId = setInterval(() => {
-        state.timerRemaining -= 1;
-        if (state.timerRemaining <= 0) {
-          clearInterval(state.timerId);
-          state.timerId = null;
-          els.timerLabel.textContent = '⏱ Time!';
-          return;
-        }
-        els.timerLabel.textContent = `⏱ ${state.timerRemaining}s`;
-      }, 1000);
-    }
+    
 
     function exportGeneratedQuestions() {
       const aiQs = state.allQuestions.filter(q => q.source === QuestionSource.AI);
@@ -1944,15 +1891,14 @@ Return exactly ONE question, with no numbering, quotes, or extra commentary.`;
       rebuildDeck();
       pickNextQuestion();
 
-      updateModeIndicator();
-
       els.nextBtn.addEventListener('click', () => {
+        stopTtsPlayback();
         pickNextQuestion();
-        startTimerForMode();
       });
 
       els.generateBtn.addEventListener('click', () => {
         if (!state.isGenerating) {
+          stopTtsPlayback();
           generateQuestionWithAI();
         }
       });
@@ -2001,6 +1947,10 @@ Return exactly ONE question, with no numbering, quotes, or extra commentary.`;
 
       if (els.ttsToggleBtn) {
         els.ttsToggleBtn.addEventListener('click', () => {
+          const wasEnabled = state.speechEnabled;
+          if (wasEnabled) {
+            stopTtsPlayback();
+          }
           state.speechEnabled = !state.speechEnabled;
           updateTtsUI();
           if (state.speechEnabled && state.currentQuestion) {
