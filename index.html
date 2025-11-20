@@ -622,6 +622,26 @@
       display: none !important;
     }
 
+    .tts-icon {
+      width: 16px;
+      height: 16px;
+      stroke: var(--text-muted);
+      stroke-width: 1.6;
+      fill: none;
+    }
+
+    #ttsToggleBtn .tts-icon-on {
+      display: none;
+    }
+
+    #ttsToggleBtn[data-state="on"] .tts-icon-on {
+      display: inline;
+    }
+
+    #ttsToggleBtn[data-state="on"] .tts-icon-off {
+      display: none;
+    }
+
     @media (max-width: 720px) {
       body {
         padding: 16px 10px;
@@ -728,13 +748,27 @@
           <span class="mode-label" id="modeLabel"></span>
           <span class="timer-pill hidden" id="timerLabel"></span>
           <button type="button" class="btn-ghost" id="exportBtn">Export AI deck</button>
-          <button type="button" class="btn-icon" id="ttsToggleBtn" aria-label="Toggle question speech" title="Read questions aloud">🔇</button>
-          <button type="button" class="btn-icon" id="ttsReplayBtn" aria-label="Replay question" title="Replay this question" disabled>⟲</button>
+          <button type="button" class="btn-icon" id="ttsToggleBtn" aria-label="Toggle question speech" title="Read questions aloud" data-state="off">
+            <svg class="tts-icon tts-icon-off" viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M4 10v4h3.5L12 18v-8L7.5 10H4z"></path>
+              <path d="M16 9l4 6M20 9l-4 6" stroke-linecap="round"></path>
+            </svg>
+            <svg class="tts-icon tts-icon-on" viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M4 10v4h3.5L12 18v-8L7.5 10H4z"></path>
+              <path d="M15.5 9.5a4 4 0 010 5M17.5 8a7 7 0 010 8" stroke-linecap="round"></path>
+            </svg>
+          </button>
+          <button type="button" class="btn-icon" id="ttsReplayBtn" aria-label="Replay question" title="Replay this question" disabled>
+            <svg class="tts-icon tts-icon-replay" viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M5 8V4l3 3-3 3V8z"></path>
+              <path d="M7 6a8 8 0 018-2 8 8 0 11-5.657 13.657" stroke-linecap="round"></path>
+            </svg>
+          </button>
         </div>
       </section>
     </main>
     <div class="version-cluster">
-      <div class="version-label">2025.11.20.1.0.0.9</div>
+      <div class="version-label">2025.11.20.1.0.1.0</div>
       <button type="button" class="version-help" aria-label="Keyboard and AI shortcuts">
         ?
         <span class="version-tooltip">Press Space or the Next button for a new card. On desktop, press G to ask the AI for a fresh question.</span>
@@ -1403,6 +1437,7 @@
 
     let ttsAudio = null;
     let ttsObjectUrl = null;
+    let ttsCachedForText = '';
 
     function ensureTtsAudio() {
       if (!ttsAudio) {
@@ -1420,8 +1455,10 @@
 
     function updateTtsUI() {
       if (!els.ttsToggleBtn || !els.ttsReplayBtn) return;
-      els.ttsToggleBtn.textContent = state.speechEnabled ? '🔊' : '🔇';
-      els.ttsReplayBtn.disabled = !state.lastSpokenText;
+      els.ttsToggleBtn.dataset.state = state.speechEnabled ? 'on' : 'off';
+      const canReplay = !!state.lastSpokenText && state.speechEnabled;
+      els.ttsReplayBtn.disabled = !canReplay;
+      els.ttsReplayBtn.classList.toggle('hidden', !canReplay);
     }
 
     function initCategories() {
@@ -1724,6 +1761,13 @@ Return exactly ONE question, with no numbering, quotes, or extra commentary.`;
 
     async function speakTextWithOpenAI(text) {
       if (!text || !window.fetch) return;
+      const audioEl = ensureTtsAudio();
+
+      if (ttsObjectUrl && ttsCachedForText === text) {
+        audioEl.src = ttsObjectUrl;
+        audioEl.play().catch(() => {});
+        return;
+      }
 
       const apiKey = await getApiKeyFromUser();
       if (!apiKey) {
@@ -1754,14 +1798,14 @@ Return exactly ONE question, with no numbering, quotes, or extra commentary.`;
       const blob = new Blob([arrayBuffer], { type: 'audio/mpeg' });
       revokeTtsUrl();
       ttsObjectUrl = URL.createObjectURL(blob);
+      ttsCachedForText = text;
 
-      const audioEl = ensureTtsAudio();
       audioEl.src = ttsObjectUrl;
       audioEl.play().catch(() => {});
     }
 
     function speakCurrentQuestion() {
-      if (!state.lastSpokenText) return;
+      if (!state.speechEnabled || !state.lastSpokenText) return;
       speakTextWithOpenAI(state.lastSpokenText);
     }
 
@@ -1967,7 +2011,7 @@ Return exactly ONE question, with no numbering, quotes, or extra commentary.`;
 
       if (els.ttsReplayBtn) {
         els.ttsReplayBtn.addEventListener('click', () => {
-          if (state.lastSpokenText) {
+          if (state.speechEnabled && state.lastSpokenText) {
             speakCurrentQuestion();
           }
         });
