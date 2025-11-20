@@ -1568,32 +1568,39 @@ Return exactly ONE question, with no numbering, quotes, or extra commentary.`;
           }
         }
 
-        // Second call: use the (possibly rewritten) prompt to actually request a question.
-        const response = await fetch('https://api.openai.com/v1/chat/completions', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': 'Bearer ' + apiKey
-          },
-          body: JSON.stringify({
-            model: 'gpt-5.1',
-            messages: [
-              { role: 'system', content: 'You generate thoughtful, open-ended, safe but occasionally spicy conversation questions for teens and adults.' },
-              { role: 'user', content: effectivePrompt }
-            ],
-            temperature: 0.9,
-            max_completion_tokens: 128
-          })
-        });
+        async function requestQuestion(promptText) {
+          const response = await fetch('https://api.openai.com/v1/chat/completions', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': 'Bearer ' + apiKey
+            },
+            body: JSON.stringify({
+              model: 'gpt-5.1',
+              messages: [
+                { role: 'system', content: 'You generate thoughtful, open-ended, safe but occasionally spicy conversation questions for teens and adults.' },
+                { role: 'user', content: promptText }
+              ],
+              temperature: 0.9,
+              max_completion_tokens: 128
+            })
+          });
 
-        if (!response.ok) {
-          const text = await response.text();
-          throw new Error('API error: ' + text);
+          if (!response.ok) {
+            const text = await response.text();
+            throw new Error('API error: ' + text);
+          }
+
+          const data = await response.json();
+          const raw = (data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content) || '';
+          const cleaned = raw.trim().replace(/^"|"$/g, '');
+          return cleaned;
         }
 
-        const data = await response.json();
-        const raw = (data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content) || '';
-        const cleaned = raw.trim().replace(/^"|"$/g, '');
+        let cleaned = await requestQuestion(effectivePrompt);
+        if (!cleaned || textHasBannedContent(cleaned)) {
+          cleaned = await requestQuestion(basePrompt);
+        }
         if (!cleaned || textHasBannedContent(cleaned)) {
           throw new Error('Model returned an empty or unsafe question.');
         }
