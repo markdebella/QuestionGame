@@ -1438,9 +1438,12 @@
       if (isOn) {
         setStatus({
           label: 'Thinking…',
-          text: 'Asking the model for a new question. This may take a few seconds.',
+          text: '',
           mode: 'busy'
         });
+        els.statusPill.title = 'Asking the model for a new question. This may take a few seconds.';
+      } else {
+        els.statusPill.title = '';
       }
     }
 
@@ -1537,6 +1540,35 @@ Return exactly ONE question, with no numbering, quotes, or extra commentary.`;
           throw new Error('No OpenAI API key provided.');
         }
 
+        // First call: ask the model to rewrite the prompt instructions into a fresh phrasing.
+        const rewriteResponse = await fetch('https://api.openai.com/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + apiKey
+          },
+          body: JSON.stringify({
+            model: 'gpt-5.1',
+            messages: [
+              { role: 'system', content: 'You are a prompt rewriter. You take in instructions for generating conversation questions and restate them in a different wording with similar meaning.' },
+              { role: 'user', content: basePrompt }
+            ],
+            temperature: 1.0,
+            max_completion_tokens: 200
+          })
+        });
+
+        let effectivePrompt = basePrompt;
+        if (rewriteResponse.ok) {
+          const rewriteData = await rewriteResponse.json();
+          const rewriteRaw = (rewriteData.choices && rewriteData.choices[0] && rewriteData.choices[0].message && rewriteData.choices[0].message.content) || '';
+          const rewriteClean = rewriteRaw.trim();
+          if (rewriteClean) {
+            effectivePrompt = rewriteClean;
+          }
+        }
+
+        // Second call: use the (possibly rewritten) prompt to actually request a question.
         const response = await fetch('https://api.openai.com/v1/chat/completions', {
           method: 'POST',
           headers: {
@@ -1547,7 +1579,7 @@ Return exactly ONE question, with no numbering, quotes, or extra commentary.`;
             model: 'gpt-5.1',
             messages: [
               { role: 'system', content: 'You generate thoughtful, open-ended, safe but occasionally spicy conversation questions for teens and adults.' },
-              { role: 'user', content: basePrompt }
+              { role: 'user', content: effectivePrompt }
             ],
             temperature: 0.9,
             max_completion_tokens: 128
