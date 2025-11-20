@@ -667,7 +667,7 @@
         </div>
       </section>
     </main>
-    <div class="version-label">2025.11.19.1.0.0.1</div>
+    <div class="version-label">2025.11.19.1.0.0.2</div>
   </div>
 
   <div class="modal-backdrop hidden" id="settingsBackdrop">
@@ -1440,13 +1440,24 @@
     async function generateQuestionWithAI() {
       setGenerating(true);
       try {
+        const categoryName = state.currentCategory === '__all__' ? 'All categories' : state.currentCategory;
+        const safety = state.settings.safetyLevel || SafetyLevel.BALANCED;
+
         const basePrompt = `You are helping create questions for an in-person conversation game for people ages 13 and up.
+The game uses loose themes like Identity & Childhood, Family & Relationships, Love & Intimacy, Ethics & Regrets, Fears & Vulnerability, Beliefs & Philosophy, Future & Dreams, Work & Money, Humor & Silly, Hypotheticals & Storytelling, Taboo (Soft), Media & Pop Culture, Body & Appearance, and Random & Other.
+
+Requested category for this question: ${categoryName}.
+Overall vibe setting is: ${safety}.
+
 Each question must:
 - Be open-ended and invite storytelling or reflection.
 - Not be answerable with yes/no or a single word.
 - Be appropriate for most teens while still interesting to adults.
 - You may touch on sex, gender, identity, relationships, and violence in a thoughtful, non-graphic way, but avoid explicit sexual detail and avoid self-harm themes.
 - Stand alone without referencing previous questions.
+- Feel meaningfully different in focus from a typical "what are you most afraid of" or "who do you have a crush on" style question.
+
+Use the requested category as a gentle theme (especially if it is not "All categories") but you do NOT need to mention the category name itself in the wording.
 Return exactly ONE question, with no numbering, quotes, or extra commentary.`;
 
         const apiKey = await getApiKeyFromUser();
