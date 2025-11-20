@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <title>The Question Game</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect x='8' y='8' width='48' height='48' rx='14' ry='14' fill='%230b1120' stroke='%234f46e5' stroke-width='3'/%3E%3Cpath d='M32 20c-5 0-9 3.5-9 8h4c0-2.7 2.1-4.5 5-4.5s5 1.8 5 4.3c0 1.9-0.9 3.2-2.9 4.3-2.2 1.2-3.1 2.4-3.1 4.5V43h4v-1.8c0-1.4 0.5-2 2.2-3 2.6-1.5 3.8-3.7 3.8-6.9C40 23.3 36.6 20 32 20z' fill='%23e5e7eb'/%3E%3Ccircle cx='32' cy='47' r='2.4' fill='%23e5e7eb'/%3E%3C/svg%3E" />
   <style>
     :root {
       --bg: #05060a;
@@ -650,6 +651,7 @@
         </div>
       </section>
     </main>
+    <div class="version-label">2025.11.19.1.0.0.0</div>
   </div>
 
   <div class="modal-backdrop hidden" id="settingsBackdrop">
@@ -1593,14 +1595,12 @@ Return exactly ONE question, with no numbering, quotes, or extra commentary.`;
           arr.push(q.text);
         }
       });
-      const content = 'const exportedQuestions = [\n' +
-        arr.map(t => '  ' + JSON.stringify(t) + ',').join('\n') +
-        '\n];\n';
-      const blob = new Blob([content], { type: 'text/javascript;charset=utf-8' });
+      const content = JSON.stringify(arr, null, 2);
+      const blob = new Blob([content], { type: 'application/json;charset=utf-8' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = 'question-game-export.js';
+      a.download = 'question-game-export.json';
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
