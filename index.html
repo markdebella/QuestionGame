@@ -1323,16 +1323,35 @@
       }
     }
 
-    function obfuscatedApiKey() {
-      const b64 = 'c2stTklzX2o4WXJ0TXhRZ2Z1U0Rxd0dfdVNEcXdHUWVja0NGUEtjdnZjeDBGZXh1RzExNktUM0JfdmN4MEZleHVHMTE2S1QzQmxia0ZKejNIblh6TzBiMjE3Z1o3RmFGY0s0VWdwVXlGQ3dnWlRYT1ZnRDlQR1FB';
+    let cachedApiKey = null;
+
+    function getApiKeyFromUser() {
+      if (cachedApiKey) return cachedApiKey;
+
       try {
-        const decoded = atob(b64);
-        const parts = decoded.split('_');
-        if (parts.length < 4) return '';
-        return parts[0] + parts[1] + parts[2] + parts[3];
+        const stored = localStorage.getItem('the-question-game:openai-api-key');
+        if (stored) {
+          cachedApiKey = stored;
+          return cachedApiKey;
+        }
       } catch (e) {
+        // Ignore storage errors and fall back to prompting.
+      }
+
+      const key = window.prompt('Enter your OpenAI API key (sk-...) for The Question Game:', '');
+      if (!key) {
         return '';
       }
+
+      cachedApiKey = key.trim();
+
+      try {
+        localStorage.setItem('the-question-game:openai-api-key', cachedApiKey);
+      } catch (e) {
+        // If storage fails, still allow in-memory use for this session.
+      }
+
+      return cachedApiKey;
     }
 
     function loadStoredQuestions() {
@@ -1368,10 +1387,10 @@ Each question must:
 - Stand alone without referencing previous questions.
 Return exactly ONE question, with no numbering, quotes, or extra commentary.`;
 
-        const apiKey = obfuscatedApiKey();
+        const apiKey = getApiKeyFromUser();
 
         if (!apiKey) {
-          throw new Error('No OpenAI API key configured.');
+          throw new Error('No OpenAI API key provided.');
         }
 
         const response = await fetch('https://api.openai.com/v1/chat/completions', {
@@ -1604,4 +1623,3 @@ Return exactly ONE question, with no numbering, quotes, or extra commentary.`;
   </script>
 </body>
 </html>
-
