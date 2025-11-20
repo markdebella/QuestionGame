@@ -732,7 +732,7 @@
       </section>
     </main>
     <div class="version-cluster">
-      <div class="version-label">2025.11.19.1.0.0.7</div>
+      <div class="version-label">2025.11.19.1.0.0.8</div>
       <button type="button" class="version-help" aria-label="Keyboard and AI shortcuts">
         ?
         <span class="version-tooltip">Press Space or the Next button for a new card. On desktop, press G to ask the AI for a fresh question.</span>
@@ -1540,35 +1540,11 @@ Return exactly ONE question, with no numbering, quotes, or extra commentary.`;
           throw new Error('No OpenAI API key provided.');
         }
 
-        // First call: ask the model to rewrite the prompt instructions into a fresh phrasing.
-        const rewriteResponse = await fetch('https://api.openai.com/v1/chat/completions', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': 'Bearer ' + apiKey
-          },
-          body: JSON.stringify({
-            model: 'gpt-5.1',
-            messages: [
-              { role: 'system', content: 'You are a prompt rewriter. You take in instructions for generating conversation questions and restate them in a different wording with similar meaning.' },
-              { role: 'user', content: basePrompt }
-            ],
-            temperature: 1.0,
-            max_completion_tokens: 200
-          })
-        });
-
-        let effectivePrompt = basePrompt;
-        if (rewriteResponse.ok) {
-          const rewriteData = await rewriteResponse.json();
-          const rewriteRaw = (rewriteData.choices && rewriteData.choices[0] && rewriteData.choices[0].message && rewriteData.choices[0].message.content) || '';
-          const rewriteClean = rewriteRaw.trim();
-          if (rewriteClean) {
-            effectivePrompt = rewriteClean;
-          }
-        }
+        const tempMin = 0.8;
+        const tempMax = 1.2;
 
         async function requestQuestion(promptText) {
+          const temperature = tempMin + Math.random() * (tempMax - tempMin);
           const response = await fetch('https://api.openai.com/v1/chat/completions', {
             method: 'POST',
             headers: {
@@ -1581,7 +1557,7 @@ Return exactly ONE question, with no numbering, quotes, or extra commentary.`;
                 { role: 'system', content: 'You generate thoughtful, open-ended, safe but occasionally spicy conversation questions for teens and adults.' },
                 { role: 'user', content: promptText }
               ],
-              temperature: 0.9,
+              temperature,
               max_completion_tokens: 128
             })
           });
@@ -1597,7 +1573,7 @@ Return exactly ONE question, with no numbering, quotes, or extra commentary.`;
           return cleaned;
         }
 
-        let cleaned = await requestQuestion(effectivePrompt);
+        let cleaned = await requestQuestion(basePrompt);
         if (!cleaned || textHasBannedContent(cleaned)) {
           cleaned = await requestQuestion(basePrompt);
         }
