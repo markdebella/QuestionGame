@@ -292,6 +292,7 @@
       display: inline-flex;
       align-items: center;
       gap: 0.3rem;
+      position: relative;
     }
 
     .source-dot {
@@ -653,6 +654,10 @@
         width: 100%;
         justify-content: space-between;
       }
+
+      #exportBtn {
+        display: none;
+      }
     }
   </style>
 </head>
@@ -705,12 +710,13 @@
           <span id="statusLabel">Ready</span>
         </div>
         <div class="status-text" id="statusText">
-          Seeded questions live in this file. AI questions stay only in this browser.
+          Status messages and mode indicators appear here.
         </div>
         <div class="status-extra">
           <div class="source-pill" id="sourcePill">
             <span class="source-dot seeded" id="sourceDot"></span>
             <span id="sourceLabel">Seeded deck</span>
+            <span class="source-tooltip">Seeded questions live in this HTML file. AI-generated questions are stored only in this browser and are not written back into the file.</span>
           </div>
           <span class="mode-label" id="modeLabel"></span>
           <span class="timer-pill hidden" id="timerLabel"></span>
