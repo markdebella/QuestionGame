@@ -1,0 +1,1606 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>The Question Game</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    :root {
+      --bg: #05060a;
+      --bg-elevated: #11131b;
+      --bg-soft: #181b26;
+      --text-primary: #f5f5f7;
+      --text-muted: #a1a6b5;
+      --accent: #4f46e5;
+      --accent-soft: rgba(79, 70, 229, 0.14);
+      --accent-strong: rgba(129, 140, 248, 0.4);
+      --border-subtle: rgba(148, 163, 184, 0.16);
+      --danger: #f97373;
+      --radius-lg: 18px;
+      --radius-pill: 999px;
+      --shadow-soft: 0 24px 60px rgba(15, 23, 42, 0.9);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html, body {
+      height: 100%;
+    }
+
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: radial-gradient(circle at top, #111827 0, #020617 55%, #000 100%);
+      color: var(--text-primary);
+      display: flex;
+      align-items: stretch;
+      justify-content: center;
+      padding: 24px 16px;
+    }
+
+    .app-shell {
+      max-width: 900px;
+      width: 100%;
+      background: linear-gradient(145deg, rgba(15, 23, 42, 0.95), rgba(15, 23, 42, 0.98));
+      border-radius: 32px;
+      border: 1px solid rgba(148, 163, 184, 0.24);
+      box-shadow: var(--shadow-soft);
+      padding: 20px 20px 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .app-shell::before {
+      content: "";
+      position: absolute;
+      inset: -120px;
+      background:
+        radial-gradient(circle at 0% 0%, rgba(79, 70, 229, 0.16), transparent 60%),
+        radial-gradient(circle at 100% 0%, rgba(56, 189, 248, 0.1), transparent 55%);
+      opacity: 0.8;
+      pointer-events: none;
+      z-index: -1;
+    }
+
+    header {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .title-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 2px;
+    }
+
+    h1 {
+      font-size: clamp(1.4rem, 1.7rem, 1.9rem);
+      font-weight: 650;
+      letter-spacing: 0.02em;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5ch;
+    }
+
+    .title-pill {
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+      padding: 4px 10px;
+      border-radius: var(--radius-pill);
+      border: 1px solid rgba(129, 140, 248, 0.75);
+      background: radial-gradient(circle at 0% 0%, rgba(129, 140, 248, 0.6), transparent 45%),
+                  rgba(15, 23, 42, 0.7);
+      color: var(--text-primary);
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+    }
+
+    .title-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 999px;
+      background: #a5b4fc;
+      box-shadow: 0 0 0 5px rgba(129, 140, 248, 0.38);
+    }
+
+    .subtitle {
+      font-size: 0.9rem;
+      color: var(--text-muted);
+      max-width: 540px;
+      line-height: 1.4;
+    }
+
+    main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      min-height: 0;
+    }
+
+    .question-card {
+      flex: 1;
+      min-height: 220px;
+      max-height: 460px;
+      border-radius: 26px;
+      padding: clamp(18px, 4vw, 26px);
+      background:
+        radial-gradient(circle at 0% 0%, rgba(79, 70, 229, 0.2), transparent 65%),
+        radial-gradient(circle at 100% 100%, rgba(14, 165, 233, 0.16), transparent 65%),
+        linear-gradient(135deg, rgba(15, 23, 42, 0.96), rgba(15, 23, 42, 0.98));
+      border: 1px solid rgba(148, 163, 184, 0.24);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 16px;
+      box-shadow: 0 22px 40px rgba(15, 23, 42, 0.9);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .question-card::after {
+      content: "";
+      position: absolute;
+      inset: -40px;
+      background-image: radial-gradient(circle at 20% 20%, rgba(148, 163, 184, 0.18), transparent 60%);
+      opacity: 0.4;
+      mix-blend-mode: screen;
+      pointer-events: none;
+    }
+
+    .question-scroll {
+      position: relative;
+      overflow-y: auto;
+      padding-right: 4px;
+    }
+
+    .question-text {
+      position: relative;
+      font-size: clamp(1.35rem, 2vw, 1.7rem);
+      line-height: 1.5;
+      letter-spacing: 0.01em;
+      font-weight: 550;
+      max-width: 100%;
+      z-index: 1;
+    }
+
+    .question-text em {
+      font-style: normal;
+      color: #e5e7eb;
+    }
+
+    .question-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      z-index: 1;
+      position: relative;
+    }
+
+    .tags-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      align-items: center;
+    }
+
+    .tag-chip {
+      padding: 3px 9px;
+      border-radius: 999px;
+      border: 1px solid rgba(148, 163, 184, 0.55);
+      background: rgba(15, 23, 42, 0.76);
+      backdrop-filter: blur(10px);
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.11em;
+      color: #cbd5f5;
+    }
+
+    .source-pill {
+      padding: 3px 8px;
+      border-radius: 999px;
+      border: 1px dashed rgba(148, 163, 184, 0.5);
+      background: rgba(15, 23, 42, 0.8);
+      font-size: 0.7rem;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+    }
+
+    .source-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 999px;
+    }
+
+    .source-dot.seeded { background: #4ade80; }
+    .source-dot.ai { background: #38bdf8; }
+
+    .controls-bar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 12px;
+      border-radius: 999px;
+      background: radial-gradient(circle at 0% 0%, rgba(15, 23, 42, 0.94), rgba(15, 23, 42, 0.96));
+      border: 1px solid rgba(148, 163, 184, 0.3);
+      backdrop-filter: blur(18px);
+    }
+
+    .btn-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+    }
+
+    button {
+      border: none;
+      cursor: pointer;
+      border-radius: 999px;
+      font-size: 0.9rem;
+      font-weight: 550;
+      padding: 9px 18px;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      transition: transform 0.08s ease-out, box-shadow 0.08s ease-out, background 0.12s ease-out, border-color 0.12s ease-out;
+      white-space: nowrap;
+    }
+
+    button:focus-visible {
+      outline: 2px solid rgba(129, 140, 248, 0.9);
+      outline-offset: 3px;
+    }
+
+    .btn-next {
+      background: linear-gradient(135deg, #4f46e5, #6366f1);
+      color: #eef2ff;
+      box-shadow: 0 12px 22px rgba(79, 70, 229, 0.45);
+      border: 1px solid rgba(191, 219, 254, 0.5);
+    }
+
+    .btn-next:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 14px 28px rgba(79, 70, 229, 0.5);
+    }
+
+    .btn-next:active {
+      transform: translateY(0px) scale(0.99);
+      box-shadow: 0 8px 16px rgba(79, 70, 229, 0.55);
+    }
+
+    .btn-generate {
+      background: radial-gradient(circle at 0 0, rgba(56, 189, 248, 0.7), transparent 55%),
+                  linear-gradient(135deg, #0369a1, #0ea5e9);
+      color: #e0f2fe;
+      border: 1px solid rgba(125, 211, 252, 0.75);
+      box-shadow: 0 12px 22px rgba(14, 165, 233, 0.45);
+    }
+
+    .btn-generate:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 14px 28px rgba(14, 165, 233, 0.5);
+    }
+
+    .btn-generate:active {
+      transform: translateY(0px) scale(0.99);
+      box-shadow: 0 8px 16px rgba(14, 165, 233, 0.55);
+    }
+
+    .btn-ghost {
+      background: rgba(15, 23, 42, 0.9);
+      border-radius: var(--radius-pill);
+      border: 1px solid rgba(148, 163, 184, 0.4);
+      color: var(--text-muted);
+      font-size: 0.8rem;
+      padding: 7px 12px;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+    }
+
+    .btn-ghost:hover {
+      background: rgba(30, 64, 175, 0.45);
+      color: #e5e7eb;
+    }
+
+    .category-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+
+    label {
+      font-size: 0.8rem;
+    }
+
+    select {
+      background: rgba(15, 23, 42, 0.9);
+      color: var(--text-primary);
+      border-radius: 999px;
+      border: 1px solid rgba(148, 163, 184, 0.7);
+      padding: 6px 26px 6px 10px;
+      font-size: 0.8rem;
+      appearance: none;
+      -webkit-appearance: none;
+      -moz-appearance: none;
+      background-image: linear-gradient(45deg, transparent 50%, #9ca3af 50%),
+                        linear-gradient(135deg, #9ca3af 50%, transparent 50%);
+      background-position: calc(100% - 14px) 55%, calc(100% - 10px) 55%;
+      background-size: 6px 6px, 6px 6px;
+      background-repeat: no-repeat;
+      min-width: 150px;
+    }
+
+    select:focus-visible {
+      outline: 2px solid rgba(129, 140, 248, 0.9);
+      outline-offset: 2px;
+    }
+
+    .status-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      padding: 0 4px 2px;
+    }
+
+    .status-pill {
+      padding: 2px 8px;
+      border-radius: 999px;
+      background: rgba(15, 23, 42, 0.9);
+      border: 1px solid rgba(148, 163, 184, 0.4);
+      display: inline-flex;
+      gap: 0.35rem;
+      align-items: center;
+    }
+
+    .status-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 999px;
+      background: #4ade80;
+    }
+
+    .status-dot.busy { background: #facc15; }
+    .status-dot.error { background: var(--danger); }
+
+    .status-text {
+      max-width: 70ch;
+    }
+
+    .status-strong {
+      color: #e5e7eb;
+      font-weight: 500;
+    }
+
+    .status-extra {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .mode-label {
+      padding: 2px 8px;
+      border-radius: 999px;
+      border: 1px solid rgba(148, 163, 184, 0.4);
+      font-size: 0.72rem;
+      color: var(--text-muted);
+      background: rgba(15, 23, 42, 0.9);
+    }
+
+    .timer-pill {
+      padding: 2px 8px;
+      border-radius: 999px;
+      border: 1px solid rgba(248, 250, 252, 0.35);
+      font-size: 0.72rem;
+      color: #e5e7eb;
+      background: rgba(22, 163, 74, 0.16);
+    }
+
+    .btn-icon {
+      border: none;
+      cursor: pointer;
+      background: transparent;
+      color: #e5e7eb;
+      padding: 2px 4px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1rem;
+      opacity: 0.8;
+    }
+
+    .btn-icon:hover {
+      opacity: 1;
+      transform: translateY(-0.5px);
+    }
+
+    .btn-icon:focus-visible {
+      outline: 2px solid rgba(129, 140, 248, 0.9);
+      outline-offset: 2px;
+    }
+
+    .settings-btn {
+      margin-left: auto;
+      font-size: 0.75rem;
+      padding-inline: 10px;
+    }
+
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: radial-gradient(circle at top, rgba(15, 23, 42, 0.96), rgba(15, 23, 42, 0.98));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 40;
+    }
+
+    .modal-card {
+      width: min(460px, 100% - 32px);
+      background: rgba(15, 23, 42, 0.98);
+      border-radius: 20px;
+      border: 1px solid rgba(148, 163, 184, 0.45);
+      box-shadow: 0 24px 60px rgba(15, 23, 42, 0.95);
+      padding: 16px 18px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 4px;
+    }
+
+    .modal-title {
+      font-size: 0.95rem;
+      font-weight: 550;
+    }
+
+    .modal-section {
+      border-radius: 14px;
+      border: 1px solid rgba(31, 41, 55, 0.9);
+      background: radial-gradient(circle at 0 0, rgba(79, 70, 229, 0.12), transparent 55%),
+                  rgba(15, 23, 42, 0.96);
+      padding: 8px 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .modal-section h3 {
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--text-muted);
+    }
+
+    .modal-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+
+    .modal-footer {
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+      margin-top: 4px;
+    }
+
+    .chip-select {
+      display: inline-flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .chip-option {
+      border-radius: 999px;
+      border: 1px solid rgba(148, 163, 184, 0.65);
+      padding: 3px 9px;
+      font-size: 0.75rem;
+      cursor: pointer;
+      color: var(--text-muted);
+      background: rgba(15, 23, 42, 0.9);
+    }
+
+    .chip-option.active {
+      border-color: rgba(129, 140, 248, 0.9);
+      color: #e5e7eb;
+      background: rgba(79, 70, 229, 0.45);
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    @media (max-width: 720px) {
+      body {
+        padding: 16px 10px;
+      }
+
+      .app-shell {
+        border-radius: 22px;
+        padding: 14px 14px 12px;
+      }
+
+      .question-card {
+        min-height: 210px;
+      }
+
+      .controls-bar {
+        border-radius: 22px;
+        padding-inline: 10px;
+        gap: 8px;
+      }
+
+      .btn-group {
+        width: 100%;
+        justify-content: space-between;
+      }
+
+      .btn-next, .btn-generate {
+        flex: 1;
+        justify-content: center;
+      }
+
+      .category-row {
+        width: 100%;
+        justify-content: space-between;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app-shell" role="application" aria-label="The Question Game">
+    <header>
+      <div class="title-row">
+        <h1>The Question Game</h1>
+        <div class="title-pill">
+          <span class="title-dot"></span>
+          <span>Conversation Starter</span>
+        </div>
+        <button type="button" class="btn-ghost settings-btn" id="settingsBtn">Settings</button>
+      </div>
+      <p class="subtitle">
+        Deep, odd, and occasionally spicy prompts to spark real conversation.
+        Questions are open-ended by design - meant to be explored out loud, not answered in one word.
+      </p>
+    </header>
+
+    <main>
+      <section class="question-card" aria-live="polite">
+        <div class="question-scroll">
+          <div id="questionText" class="question-text">
+            Loading questions...
+          </div>
+        </div>
+        <div class="question-meta">
+          <div class="tags-row" id="tagRow"></div>
+          <button type="button" class="btn-icon" id="favoriteBtn" aria-label="Toggle favorite">☆</button>
+        </div>
+      </section>
+
+      <section class="controls-bar" aria-label="Question controls">
+        <div class="btn-group" role="group" aria-label="Next or generate question">
+          <button type="button" class="btn-next" id="nextBtn">
+            <span>Next question</span>
+          </button>
+          <button type="button" class="btn-generate" id="generateBtn">
+            <span>Generate with AI</span>
+          </button>
+        </div>
+        <div class="category-row">
+          <label for="categorySelect">Category</label>
+          <select id="categorySelect" aria-label="Filter questions by category">
+            <option value="__all__">All categories</option>
+          </select>
+        </div>
+      </section>
+
+      <section class="status-row" aria-live="polite">
+        <div class="status-pill" id="statusPill">
+          <span class="status-dot" id="statusDot"></span>
+          <span id="statusLabel">Ready</span>
+        </div>
+        <div class="status-text" id="statusText">
+          Seeded questions only are stored in this file. AI-generated prompts exist only in this browser.
+        </div>
+        <div class="status-extra">
+          <div class="source-pill" id="sourcePill">
+            <span class="source-dot seeded" id="sourceDot"></span>
+            <span id="sourceLabel">Seeded deck</span>
+          </div>
+          <span class="mode-label" id="modeLabel"></span>
+          <span class="timer-pill hidden" id="timerLabel"></span>
+          <button type="button" class="btn-ghost" id="exportBtn">Export AI deck</button>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <div class="modal-backdrop hidden" id="settingsBackdrop">
+    <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="settingsTitle">
+      <div class="modal-header">
+        <div class="modal-title" id="settingsTitle">Game settings</div>
+        <button type="button" class="btn-icon" id="settingsCloseBtn" aria-label="Close settings">✕</button>
+      </div>
+      <div class="modal-section">
+        <h3>Content</h3>
+        <div class="modal-row">
+          <label><input type="checkbox" id="settingsSoftTaboo" checked /> Allow soft taboo topics (crushes, lingerie, flirty questions)</label>
+        </div>
+        <div class="modal-row">
+          <label><input type="checkbox" id="settingsDarkThemes" checked /> Allow darker themes (fear, horror, violence)</label>
+        </div>
+        <div class="modal-row">
+          <span>Overall vibe:</span>
+          <div class="chip-select" id="settingsSafetyChips">
+            <button type="button" class="chip-option" data-safety="Light">Light</button>
+            <button type="button" class="chip-option active" data-safety="Balanced">Balanced</button>
+            <button type="button" class="chip-option" data-safety="Spicy">Spicy</button>
+          </div>
+        </div>
+      </div>
+      <div class="modal-section">
+        <h3>Game mode</h3>
+        <div class="modal-row">
+          <select id="settingsGameMode">
+            <option value="everyone">Everyone answers</option>
+            <option value="pass">Pass the turn</option>
+            <option value="timed30">30-second spotlight</option>
+            <option value="timed60">60-second spotlight</option>
+          </select>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn-ghost" id="settingsCancelBtn">Cancel</button>
+        <button type="button" class="btn-next" id="settingsSaveBtn">Apply</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const QuestionSource = {
+      SEEDED: 'seeded',
+      AI: 'ai'
+    };
+
+    const SafetyLevel = {
+      LIGHT: 'Light',
+      BALANCED: 'Balanced',
+      SPICY: 'Spicy'
+    };
+
+    const GameMode = {
+      EVERYONE: 'everyone',
+      PASS: 'pass',
+      TIMED_30: 'timed30',
+      TIMED_60: 'timed60'
+    };
+
+    const BASE_CATEGORIES = [
+      'Identity & Childhood',
+      'Family & Relationships',
+      'Love & Intimacy',
+      'Ethics & Regrets',
+      'Fears & Vulnerability',
+      'Beliefs & Philosophy',
+      'Future & Dreams',
+      'Work & Money',
+      'Humor & Silly',
+      'Hypotheticals & Storytelling',
+      'Taboo (Soft)',
+      'Media & Pop Culture',
+      'Body & Appearance',
+      'Random & Other'
+    ];
+
+    const seededQuestionsText = [
+      "How would you describe your childhood?",
+      "What do you consider the most important event in your life so far and why?",
+      "Who or what has had the most influence on you and why?",
+      "What quirks or defining habits do you have that people notice first?",
+      "What do you consider your greatest achievement so far and why?",
+      "What is one regret you still think about, and what did you learn from it?",
+      "When have you made a choice you’d describe as cruel or unfair, and how do you look back on it now?",
+      "Have you ever been in trouble with the law? What happened and what did you take away from it?",
+      "Are you more optimistic or pessimistic, and how did you become that way?",
+      "If you were hosting a dinner party for people who passed away in the 20th century, who would you invite and why?",
+      "If you were guaranteed to inherit all of your parents’ traits, which trait from each would you be most nervous about receiving, and why?",
+      "In what situations do you think you could be capable of harming someone, and how do you feel about that part of yourself?",
+      "If you could dive into a pool or hot tub filled with anything safe and weird, what would it be and why?",
+      "What is a movie you notice over and over again but never actually sit down to watch, and why do you keep passing it by?",
+      "Where is the line of things you would absolutely refuse to do, and what makes that your boundary?",
+      "Who or what would you go to extreme lengths for, and what does that say about your values?",
+      "Who is the most important person in your life right now, and how did they earn that place?",
+      "Physically, emotionally, and mentally, what draws you toward someone you’re interested in?",
+      "How do you think you come across to other people, and where do you think that perception comes from?",
+      "In which parts of life are you more of a leader, and in which parts do you naturally follow?",
+      "Whose opinions affect you the most, and how does that shape your choices?",
+      "What is a possession you deeply care about, and what story sits behind it?",
+      "When do you prefer to be spontaneous, and when do you absolutely need a plan?",
+      "What are some of your biggest pet peeves, and why do they bother you so much?",
+      "What do you consider one of your greatest strengths, and how do you use it?",
+      "What do you see as one of your biggest weaknesses, and how does it show up in your life?",
+      "If you could gently change one thing about yourself, what would you pick and why?",
+      "When do you catch yourself putting on a front for others, and what are you trying to protect?",
+      "If you couldn’t die peacefully of old age, how would you want your story to end and why?",
+      "Once you’re gone, how would you want your body to be handled, and what values are behind that choice?",
+      "What short message would you want on your tombstone, and what do you hope it would tell people about you?",
+      "If you suddenly became the monarch of your country for one day, what would be your first major decision and why?",
+      "If you could give one piece of advice to everyone, what would you say and why that message?",
+      "Right now, what is taking up the most space in your head, and why?",
+      "Where do you go when you need to reset and feel at peace, and what makes that place special?",
+      "In what circumstances would you consider using your body or image for money, and where is your personal line?",
+      "What is a movie that disturbed you deeply, and what about it stuck with you?",
+      "What nicknames have you been given that you secretly dislike, and why do they get under your skin?",
+      "If you knew you had one day left to live, how would you spend it and who would you spend it with?",
+      "What are some of your biggest fears, from simple phobias to deeper, more abstract worries?",
+      "What do you feel is missing in your life right now, and what keeps you from having it?",
+      "Who or what do you find your mind drifting to most often during the day, and why do you think that is?",
+      "What is something you feel a deep passion for, and how did that passion begin?",
+      "If you were going to change your hair color, what would you choose and what would that color say about you?",
+      "Who is someone you really struggle to like, and what sits underneath that feeling?",
+      "What is a fantasy or daydream you revisit often, and what does it reveal about you?",
+      "Where is your happy place, and what details make it feel safe or joyful?",
+      "Where do you feel most confident being flirty or playful, and why there?",
+      "If a magical platypus offered you three thoughtful wishes, what would you ask for and why?",
+      "What song, event, or activity almost always lifts your mood, and what memories are connected to it?",
+      "What is the earliest memory you can clearly recall, and why do you think that one stuck?",
+      "If you could step into the life of any historical figure for a week, who would you choose and what would you want to experience?",
+      "When you look ahead, what do you hope to do with the rest of your life?",
+      "What feels especially confusing or hard to understand about the way another gender tends to think or act?",
+      "If you could go back and change one decision from your past, which would you choose and why?",
+      "If you could go back and ask one person a single question, who would you choose and what would you ask?",
+      "What is one of your most embarrassing moments, and what do you think of it now?",
+      "Why do you think you’ve become the person you are today?",
+      "If you could instantly learn any instrument, which one would you pick and what would you want to play first?",
+      "Which actor or actress do you find especially attractive, and what about their presence or style pulls you in?",
+      "What is something you deeply want in life right now, and why that thing?",
+      "What was your first impression of your best friend, and how has it changed over time?",
+      "As a child, what was your favorite way to spend time and what do you think it reveals about who you are now?",
+      "What is the most creative or bizarre way you’ve seen duct tape used, or could imagine using it?",
+      "In what ways have your parents tried to change you, and how has that shaped your relationship with them?",
+      "When you imagine the legacy you’ll leave behind, what do you hope people remember about you?",
+      "If you were part \"Animal A\", part \"Animal B\", and part human, which animals would you pick and what traits would you borrow?",
+      "If you could either meet the person you’ll spend your life with right now or wait and meet them later at the \"right\" time, which would you choose and why?",
+      "When you think about your life, do you feel like your bed is half full or half empty, and why?",
+      "What is something you’ve been meaning to do for a long time but still haven’t started, and what’s been holding you back?",
+      "What is one of the most romantic things you’ve ever done for someone, and how did it feel?",
+      "What is a romantic gesture you’ve imagined doing but never have, and what stopped you?",
+      "What are your personal views on religion or spirituality, and how have they changed over time?",
+      "Do you believe in an afterlife of any kind? If so, what do you imagine it might involve?",
+      "Do you believe in ghosts or spirits, and if so, what do you think they’re like?",
+      "If you could choose one super power, what would it be and how would you actually use it day to day?",
+      "If human evolution continued, what do you think the next big step for our species might look like?",
+      "What would your ideal vacation look like from morning to night?",
+      "If you could invent anything, what would you create and what problem would it solve?",
+      "When you picture the future, what do you hope everyday life looks like?",
+      "In the world of The Jetsons, what do you imagine is happening on the ground while everything else floats above?",
+      "What is one of your more unusual or compulsive habits, and how did it start?",
+      "What is something delightfully weird about you, and what’s something delightfully weird about a close friend?",
+      "What are your honest feelings about love at this point in your life?",
+      "What is one of the worst experiences you’ve had, and how did it change you?",
+      "What is an activity that relaxes you almost every time, and what about it calms you down?",
+      "What kind of weather do you feel most at home in, and why?",
+      "If you could dive into any field of study, what would you want to learn and why?",
+      "How do you feel about genetic testing and how it might shape the future?",
+      "How do you feel about cloning, especially when it comes to people?",
+      "What do you think living in space will really be like for humans?",
+      "If the sun suddenly stopped supporting life, how do you imagine humanity would respond?",
+      "What do you think might happen if humans could actually use 100% of their brain’s potential?",
+      "What does your ideal date look like from start to finish?",
+      "If you could be invisible for a day, how would you use that power and what would you avoid doing?",
+      "If you could give yourself one completely useless super power, what would it be and how would you still end up using it?",
+      "If you could design a brand-new animal, what would it be like?",
+      "If the entire world suddenly turned monochrome except for one thing you could keep in color, what would you choose and why?",
+      "Aside from the face, what part of someone’s appearance do you find most attractive and why?",
+      "If you started your own business, what would it be and what vibe would you want it to have?",
+      "What is the first time you remember feeling genuine attraction to someone, and what do you remember about that moment?",
+      "If you discovered a previously unknown island and could claim it, what would you build there and who would be welcome?",
+      "If you could make one person instantly fall for you knowing it wasn’t real love, would you ever consider it, and why or why not?",
+      "What color feels the most like your personality, and what about you matches that color?",
+      "If you knew you absolutely could not die for the next 24 hours, how would you use that time?",
+      "If you could turn any everyday activity into an Olympic sport, which one would you choose and why?",
+      "If the little prize machines in stores were run by mysterious forces, what would those forces be doing behind the scenes?",
+      "If you could erase one injustice from the world, which would you choose and why?",
+      "What would your ideal bachelor or bachelorette celebration look like?",
+      "If you suddenly had no home, no support system, and only a few hundred dollars, how would you rebuild from there?",
+      "If you had to approach someone at a bar without using a cheesy pick-up line, how would you start the conversation?",
+      "What is something weird you used to do as a kid that still makes you laugh now?",
+      "What kind of romantic getaway would you love to plan for someone, and what details would make it unforgettable?",
+      "If your partner wanted to skip a big wedding and elope, how would you feel and what would you decide?",
+      "If technology advanced enough that lifelike holograms were common, could you imagine having a real relationship with one?",
+      "If you could bring back a loved one as a robot or hologram, would you, and what would you hope that experience gave you?",
+      "How do you imagine you would handle military life, from the routine to the pressure?",
+      "If your family and friends truly disliked your partner, how would you navigate that situation?",
+      "If you could be on any reality TV show, which one would you choose and what would you hope to get out of it?",
+      "Who was your best friend when you were young, and what made that friendship work so well?",
+      "If you woke up as a member of a different gender, how would you expect your day to change?",
+      "If suddenly everyone in the world swapped genders except you, how do you think your daily life would feel different?",
+      "What is one of the worst fates you can imagine for yourself, and what makes it so terrifying?",
+      "When was the last time you felt deeply sad, and what helped you move through it?",
+      "Looking back, what has been your favorite period of your life so far and why?",
+      "Is there anything you collect or always notice, even if you don’t call it a collection yet?",
+      "Who is someone you had feelings for even though you knew it wasn’t going to work, and how did you handle that?",
+      "What is one of the kindest things anyone has ever done for you?",
+      "What is one of the kindest things you’ve done for someone else that they may or may not even know about?",
+      "What was your favorite movie when you were younger, and what did it mean to you?",
+      "When was a time you did something you knew wasn’t quite right just to get ahead, and how do you feel about it now?",
+      "Is there something or someone you might describe as an obsession, and what draws you in that strongly?",
+      "If you could instantly change one thing about your physical appearance, how would you feel about making that change?",
+      "What tends to move you to tears, whether you’re alone or with others?",
+      "Who is someone you genuinely adore, and what about them brings that feeling out?",
+      "What is one of the worst situations you’ve been in recently, and how did you get through it?",
+      "Have you ever made an important decision based on astrology, and how did it turn out?",
+      "What is one of the most disgusting things you’ve ever eaten, and how did that happen?",
+      "What is a word you really love, and what makes it satisfying to say or hear?",
+      "Do you feel stronger physically, mentally, or emotionally, and how do you know?",
+      "In the chicken-and-egg debate of life and learning, who do you think comes first: the teacher or the student?",
+      "Who was your childhood hero, and how do you see them now as an adult?",
+      "Do you get by on more sleep or less than most people, and how does it affect you?",
+      "Do you remember your very first friend, and what do you remember about your time together?",
+      "Do you feel like you’ve ever been protected by something like a guardian angel or a lucky break?",
+      "If you had to describe yourself in a seven-word sentence, what would you say?",
+      "What is a guilty pleasure of yours that you don’t always admit to people?",
+      "Have you ever tried to find the end of a rainbow, literally or figuratively?",
+      "What do you imagine might be waiting at the end of a rainbow if it were real?",
+      "Overall, do you feel like love has helped you more or hurt you more, and why?",
+      "How much do you find yourself flirting, and what does flirting look like for you?",
+      "What illness or condition scares you the most, and why?",
+      "What language have you always wanted to learn, and what would you do with it if you could speak it instantly?",
+      "Have you ever wanted to experience life as a different gender, and what would you be curious to notice about yourself?",
+      "Do you own a favorite pair of underwear or pajamas, and what makes them special to you?",
+      "Do you have an item you consider ‘lucky’? What is it, and what history does it have with you?",
+      "What kind of car would you absolutely hate to own, and why?",
+      "Where would you absolutely refuse to work, no matter how good the money was?",
+      "What do you usually do to pull yourself out of a low mood?",
+      "When your room or space is messy, do you feel your mind change too? How are the two connected for you?",
+      "If you seriously tried to take over the world, what would your strategy look like?",
+      "When you look at your life so far, what has been the best time and what has been the hardest?",
+      "What is the strangest real name you’ve ever heard, and what stuck with you about it?",
+      "What is one of the silliest or most ridiculous ways you’ve ever hurt yourself?",
+      "If you got into real trouble, who is the very first person you’d reach out to and why?",
+      "If eternity had a color, what would it be and why that shade?",
+      "Was high school mostly a positive or negative experience for you, and why?",
+      "Have you ever gotten a makeover or major style change that genuinely shifted your mood or confidence?",
+      "Do horror movies actually scare you, or do you just enjoy the ride?",
+      "Do you believe in destiny, or do you think everything is random and we create meaning afterward?",
+      "If your aura had a color today, what do you think it would be and why?",
+      "What wild animal would you most like to safely interact with, and what would you want to do with it?",
+      "When was the last time you felt truly angry, and how did you handle that emotion?",
+      "What is one of the most moving songs you’ve ever heard, and what makes it hit you so hard?",
+      "Do you believe in miracles, and have you ever experienced something that felt like one?",
+      "Which topic do you find more divisive where you live: religion or politics, and why?",
+      "If you could re-live one year of your life, which year would you pick and what would you do differently this time?",
+      "Who is your favorite relative, and what makes your relationship with them special?",
+      "What is the most frightening moment you remember living through, and what got you through it?",
+      "Would you trust a dentist who wears dentures, and what does your answer say about how you judge expertise?",
+      "Which do you think is harder to manage: a psychological addiction or a physical one, and why?",
+      "If you could be a fly on the wall for any specific moment in history or in your own life, which would you choose and why?",
+      "What is one of your most embarrassing childhood hobbies, and how do you look back on it now?",
+      "What do you imagine actually happens when the refrigerator light turns off and the door closes?",
+      "Do you believe human attraction is strictly straight or gay, or do you see sexuality as more of a spectrum?",
+      "In an all-out battle between pirates and ninjas, who do you think would win and what tips the scales?",
+      "If a baby in your care absolutely refused to stop crying, what strategies would you try before panicking?",
+      "If you had a secret ‘sexy dance’, what would set the mood and what music would you choose?",
+      "If an ice-cream flavor could be described as undeniably seductive, what flavor would it be and why?",
+      "How would you describe your sense of humor, and what kind of jokes land best with you?",
+      "If you had a rental car, unlimited gas, and three totally free days, where would you drive and what would you do?",
+      "If you were only allowed to say one phrase for an entire week, what would you pick and how would you survive?",
+      "What cartoon from your childhood do you miss the most, and what did you love about it?",
+      "What makes lingerie or special outfits feel attractive or not to you?",
+      "How do you feel about giving or receiving massages, and what makes them great or awkward?",
+      "Do you prefer watching the sunrise or the sunset, and what moments do you remember around them?",
+      "In a battle between a flying shark and a flying crocodile, who wins and what’s the scene look like?",
+      "Which parent or parental figure are you more like, and in what ways?",
+      "What are some of your favorite sensory experiences: a scent, taste, sight, sound, touch, and feeling?",
+      "What habits or traits in people in general annoy you the most, and why those?",
+      "If you had the chance to start your life over from the beginning, would you take it, and what would you hope to change?",
+      "If love weren’t so blinding or intense at first, do you think it would be better or worse overall?",
+      "Have you ever done the Time Warp or a similar dance in public, and what was the occasion?",
+      "If you’re paddling up a river in a canoe and the wheel falls off, how many pancakes can you fit in a doghouse – and how do you make sense of that question?",
+      "If you had to sum up your life so far into a motto or tagline, what would it be?",
+      "Do you have a happy dance, and what usually triggers it?",
+      "If you found out your partner was secretly involved in making adult content, how would you feel and what would you do next?",
+      "If days of the week had colors, what color would ‘Tuesday’ be to you and why?",
+      "If your boat sank and you reached the last lifeboat, who would you insist on having with you and why?",
+      "When did you stop believing in things like Santa, the Tooth Fairy, or monsters under the bed, and what replaced those beliefs for you?",
+      "When something bad happens, do you tend to believe that things will work out eventually or not, and why?",
+      "If you had to choose another culture or country to be part of, which would you choose and what draws you to it?",
+      "If you could be any mythical creature, what would you choose and what kind of life would you live?",
+      "At what point do you personally consider someone to be ‘over the hill,’ and what does that phrase really mean to you?",
+      "What is the worst combination of foods you’ve ever eaten together, accidentally or on purpose?",
+      "If you were cut off from all civilization for a month, where would you want to be and how would you occupy your time?",
+      "When you imagine the first aliens to publicly visit Earth, do you imagine them arriving as peaceful visitors or not, and why?",
+      "If you knew you were going to die soon and could make only a single phone call, who would you call and what would you say?",
+      "If you could teleport anywhere in the world right now, where would you go and what would you do there?",
+      "If your skin could safely be made of any different material, what would you choose and how would that change your life?",
+      "If you were forced to watch only one movie for the rest of your life, which one would it be and why that one?",
+      "What is your personal kryptonite – the thing that weakens your resolve every time?",
+      "Has music ever felt like it genuinely saved you or shifted your path? What song or moment was it?",
+      "When something strange is happening and nothing looks right, who is your real-life version of ‘who you gonna call’?",
+      "Do you believe in luck, or do you think we mostly create our own outcomes?",
+      "Do you believe in karma, and have you ever felt like you saw it in action?",
+      "If you could travel five minutes back in time and talk to yourself, what kind of situations would you use that power for?",
+      "What do you think newborns or very young infants might dream about, if anything?",
+      "What makes more sense to you personally: a single god, many gods, or none at all – and why?",
+      "If you were offered the red pill or the blue pill in The Matrix sense, what do you think each one represents for you in real life?",
+      "If you were to come back as a flower in another life, which flower would you be and where would you grow?",
+      "If you had to exist as a large rock in a single place for the rest of time, where would you choose to rest and what would you hope to witness?",
+      "What is one of your biggest insecurities, and where do you think it started?",
+      "Looking at your life right now, what do you truly value most and why?",
+      "If you could pick any shoe size for comfort and style, what would you choose and why?",
+      "What is one of the strangest gifts you’ve ever received, and what did it mean to you?",
+      "What sorts of things make you giddy with joy like a little kid?",
+      "What skill or talent do you wish you had, and what would you do if you suddenly had it tomorrow?",
+      "If you yourself were an instrument, what instrument would you be and why?",
+      "If you went to a huge theme park but could only go on one ride or to one area, what would you choose and why?",
+      "What has been one of your greatest food experiences in life so far?",
+      "What is one of your proudest moments in the kitchen or with food?",
+      "If you could step into any TV show as one of the characters, which character would you be and why?",
+      "If you could add an extra body part – useful or silly – what would you add and what would you do with it?",
+      "What is your favorite view, whether it’s a physical place or a metaphorical perspective?",
+      "If you were handed a real-life ‘Get out of jail free’ card, what situation would you keep it for and why?",
+      "If you were an ice-cream truck, what song would you play to attract people, and why that tune?",
+      "If you had unlimited marshmallows, unlimited time, and unlimited focus, what absurd or amazing thing would you build?",
+      "If you woke up one day and everyone insisted that the classic pretzel shape had always been a figure-eight, how would you handle remembering something different?",
+      "If you were a kitchen appliance, which one would you be and what does that say about your personality?",
+      "If you got called down as the next contestant on The Price is Right, how would you introduce yourself to the host?",
+      "If you had a one-word famous name like Cher or Madonna, what would your single name be and why?",
+      "If you were a personality disorder come to life, which one would you be most like and why?",
+      "If you had to enter witness protection, where would you want your new life to be, what would you do for work, and what would your new name be?",
+      "Have you ever dreamt in another language, or imagined yourself doing so?",
+      "If you were a self-help book, what specific problem would you help people solve?",
+      "If you were a magician, what unexpected thing would you pull out of your hat to surprise people?",
+      "If you could blend any one thing in a blender just to see what would happen, what would you pick and why?",
+      "If you were traveling around the world in a hot air balloon, what shape or design would you want your balloon to have?",
+      "What horror-movie scenario would you least want to live through in real life?",
+      "If you were to write a book, what kind of story or topic would it focus on?",
+      "What fictional or imaginary creature would you love to have as a pet, and how would you take care of it?",
+      "What is the most vague or unhelpful way you’ve ever heard someone try to describe another person?",
+      "What impression or character can you imitate best, and how did you learn to do it?",
+      "What is one of the worst things you’ve ever let yourself be talked into doing, and how do you feel about it now?",
+      "If money were no object, what global project or initiative would you launch and why?",
+      "If you were aging backward and could choose the age you start at, what age would you pick and why?",
+      "What is something you’ve always wanted to learn how to do, and what’s stopped you from starting?",
+      "If you could live without one emotion, which would you choose and how would that change your life?",
+      "What is your go-to karaoke song, and why does it work for you?",
+      "If you had to live in either extreme heat or extreme cold long-term, which would you choose and how would you cope?",
+      "If you could form a band with yourself in it, what would your role be and which famous musicians would you want as bandmates?",
+      "Which TV or movie character do you feel you’re most like, and in what ways?",
+      "What do you think the world would be like if people stopped dying and everyone could live forever?",
+      "What is the best breakfast cereal in your opinion, and what memories are attached to it?",
+      "Share something from your life that you can only describe as a miracle.",
+      "If you could only keep one book for the rest of your life, which one would you choose and why?",
+      "If you were invited to be a guest on any talk show, whose show would you choose and what story would you want to tell?",
+      "How do you imagine a zombie apocalypse might actually start, and what would your survival strategy be?",
+      "What car would you most love to own someday, and what makes it your dream car?",
+      "What is the scariest ghost story you remember from growing up, and who told it to you?",
+      "If you had to relocate based purely on the language or accent of a place, where would you go and why?",
+      "Is there someone from your past who feels like \"the one that got away,\" and what do you imagine life with them might have been like?",
+      "If you could have one famous person as a genuine friend, who would you choose and what would you want to do together?",
+      "Do you have a recurring dream, and what patterns do you see in it?",
+      "If you were a set of bumper stickers, what would you say on your own car, on your enemy’s car, and on your parents’ car?",
+      "What is one purchase you genuinely regret making, and what did you learn from it?",
+      "If you were planning a big heist, where would you steal from, what would you take, and who would be on your team?",
+      "Which TV show feels the most like your life, and why do you relate to it?",
+      "Regardless of how you’d like to die, how do you realistically think your life will end?",
+      "Can you think of someone in your past that you’re now glad you didn’t stay with because you feel like you dodged a bullet?",
+      "If your body no longer needed food or drink to survive, how would that change how you live and spend your time?",
+      "Describe one of your favorite holiday or Christmas memories and why it stands out.",
+      "If you had to choose between a deep emotional connection and an incredible physical connection, which would you pick and why?",
+      "Tell a story about an embarrassing moment in your life that you can laugh about now.",
+      "What place in the world would you most like to visit above all others, and what would you hope to experience there?"
+    ];
+
+    const bannedPatterns = [
+      /self-harm|kill myself|suicide|take my own life/i,
+      /explicit sex|graphic sexual/i
+    ];
+
+    function textHasBannedContent(t) {
+      return bannedPatterns.some(re => re.test(t));
+    }
+
+    function buildTags(text) {
+      const t = text.toLowerCase();
+      const categories = new Set();
+      const flags = {
+        isSexual: false,
+        isViolent: false,
+        isVeryDark: false,
+        spiceLevel: 0,
+        depth: 'Balanced'
+      };
+
+      if (/(childhood|kid|when you were little|favorite movie as a child|school|high school)/.test(t)) {
+        categories.add('Identity & Childhood');
+      }
+      if (/(parent|parents|family|relative|friend|best friend|significant other|lover|partner|wedding|marriage|relationship|spouse)/.test(t)) {
+        categories.add('Family & Relationships');
+      }
+      if (/(love|romantic|getaway|date|bachelor|bachelorette|crush|attracted|flirt|intimacy)/.test(t)) {
+        categories.add('Love & Intimacy');
+      }
+      if (/(regret|immoral|evil|criminal|record|addiction|justice|injustice|wrong|law)/.test(t)) {
+        categories.add('Ethics & Regrets');
+      }
+      if (/(fear|scariest|frightening|worst fate|insecurity|insecure|anxious|afraid|nightmare|phobia)/.test(t)) {
+        categories.add('Fears & Vulnerability');
+      }
+      if (/(religion|afterlife|ghost|spirit|god|gods|destiny|karma|luck|miracle|guardian angel|philosophy|believe|atheist)/.test(t)) {
+        categories.add('Beliefs & Philosophy');
+      }
+      if (/(future|plans for the rest of your life|evolution|space|sun burns out|world be like|live forever|vacation|dream wedding|dreams)/.test(t)) {
+        categories.add('Future & Dreams');
+      }
+      if (/(job|work|career|business|boss|coworker|where would you refuse to work|salary|money|paycheck)/.test(t)) {
+        categories.add('Work & Money');
+      }
+      if (/(funny|joke|humor|silly|ridiculous|weirdest|strangest|time warp|happy dance|sexy dance|flying shark|flying crocodile|pretzel|bumper sticker)/.test(t)) {
+        categories.add('Humor & Silly');
+      }
+      if (/(if you could|deserted island|what would you do if|imagine you are|suppose technology advances|if you were a|zombie apocalypse|origin story|hot air balloon|witness protection|band that would include yourself)/.test(t)) {
+        categories.add('Hypotheticals & Storytelling');
+      }
+      if (/(sex|sexy|pornography|lingerie|threesome|erotic)/.test(t)) {
+        categories.add('Taboo (Soft)');
+        flags.isSexual = true;
+        flags.spiceLevel = Math.max(flags.spiceLevel, 2);
+      }
+      if (/(violence|violent|kill|murder|war|horror-movie premise|zombie)/.test(t)) {
+        categories.add('Fears & Vulnerability');
+        flags.isViolent = true;
+        flags.isVeryDark = true;
+      }
+      if (/(movie|tv|cartoon|song|band|cereal|book|star trek|price is right|talk show|reality tv|ghost story)/.test(t)) {
+        categories.add('Media & Pop Culture');
+      }
+      if (/(hair|appearance|body part|aura|underwear|skin|shoe|physical appearance|makeover)/.test(t)) {
+        categories.add('Body & Appearance');
+      }
+
+      if (/regret|deepest|worst|frightening|trauma|one of the worst/.test(t)) {
+        flags.depth = 'Deep';
+      } else if (/(favorite|ideal|would you rather|if you could|dream)/.test(t)) {
+        flags.depth = 'Light';
+      }
+
+      if (/(flirt|sexy|underwear|lingerie|attracted|fantasy|kryptonite|bachelor|bachelorette|romantic)/.test(t)) {
+        flags.spiceLevel = Math.max(flags.spiceLevel, 1);
+      }
+
+      if (categories.size === 0) {
+        categories.add('Random & Other');
+      }
+
+      return { categories: Array.from(categories), flags };
+    }
+
+    function buildQuestionFromText(text, idx, source) {
+      const clean = text.trim();
+      const { categories, flags } = buildTags(clean);
+      return {
+        id: (source === QuestionSource.SEEDED ? 'seeded-' : 'ai-') + idx,
+        text: clean,
+        categories,
+        flags,
+        source
+      };
+    }
+
+    const seededQuestions = seededQuestionsText
+      .filter(t => t && !textHasBannedContent(t))
+      .map((t, idx) => buildQuestionFromText(t, idx, QuestionSource.SEEDED));
+
+    function questionPassesSafety(q, settings) {
+      if (q.flags && q.flags.isSexual && !settings.allowSoftTaboo) {
+        return false;
+      }
+      if (q.flags && q.flags.isVeryDark && !settings.allowDarkThemes) {
+        return false;
+      }
+      if (settings.safetyLevel === SafetyLevel.LIGHT && q.flags && q.flags.depth === 'Deep') {
+        return false;
+      }
+      if (settings.safetyLevel === SafetyLevel.LIGHT && q.flags && q.flags.spiceLevel > 0) {
+        return false;
+      }
+      if (settings.safetyLevel === SafetyLevel.SPICY && q.flags && q.flags.spiceLevel === 0 && q.flags.depth !== 'Deep') {
+        return true;
+      }
+      return true;
+    }
+
+    function buildDeckByCategory(allQuestions, category, settings) {
+      let pool = allQuestions.filter(q => questionPassesSafety(q, settings));
+      if (category && category !== '__all__') {
+        pool = pool.filter(q => q.categories.includes(category));
+      }
+      return [...pool];
+    }
+
+    function shuffle(array) {
+      const arr = [...array];
+      for (let i = arr.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+      }
+      return arr;
+    }
+
+    const state = {
+      allQuestions: [...seededQuestions],
+      currentDeck: [],
+      deckIndex: 0,
+      currentQuestion: null,
+      currentCategory: '__all__',
+      isGenerating: false,
+      favorites: new Set(),
+      history: [],
+      timerId: null,
+      timerRemaining: 0,
+      settings: {
+        allowSoftTaboo: true,
+        allowDarkThemes: true,
+        safetyLevel: SafetyLevel.BALANCED,
+        gameMode: GameMode.EVERYONE
+      }
+    };
+
+    const els = {
+      questionText: document.getElementById('questionText'),
+      tagRow: document.getElementById('tagRow'),
+      sourcePill: document.getElementById('sourcePill'),
+      sourceDot: document.getElementById('sourceDot'),
+      sourceLabel: document.getElementById('sourceLabel'),
+      nextBtn: document.getElementById('nextBtn'),
+      generateBtn: document.getElementById('generateBtn'),
+      categorySelect: document.getElementById('categorySelect'),
+      statusPill: document.getElementById('statusPill'),
+      statusDot: document.getElementById('statusDot'),
+      statusLabel: document.getElementById('statusLabel'),
+      statusText: document.getElementById('statusText'),
+      modeLabel: document.getElementById('modeLabel'),
+      timerLabel: document.getElementById('timerLabel'),
+      favoriteBtn: document.getElementById('favoriteBtn'),
+      exportBtn: document.getElementById('exportBtn'),
+      settingsBtn: document.getElementById('settingsBtn'),
+      settingsBackdrop: document.getElementById('settingsBackdrop'),
+      settingsCloseBtn: document.getElementById('settingsCloseBtn'),
+      settingsCancelBtn: document.getElementById('settingsCancelBtn'),
+      settingsSaveBtn: document.getElementById('settingsSaveBtn'),
+      settingsSoftTaboo: document.getElementById('settingsSoftTaboo'),
+      settingsDarkThemes: document.getElementById('settingsDarkThemes'),
+      settingsSafetyChips: document.getElementById('settingsSafetyChips'),
+      settingsGameMode: document.getElementById('settingsGameMode')
+    };
+
+    function initCategories() {
+      const catSet = new Set();
+      state.allQuestions.forEach(q => q.categories.forEach(c => catSet.add(c)));
+      const categories = Array.from(catSet).sort((a, b) => a.localeCompare(b));
+      for (const cat of categories) {
+        const opt = document.createElement('option');
+        opt.value = cat;
+        opt.textContent = cat;
+        els.categorySelect.appendChild(opt);
+      }
+    }
+
+    function rebuildDeck() {
+      state.currentDeck = shuffle(buildDeckByCategory(state.allQuestions, state.currentCategory, state.settings));
+      state.deckIndex = 0;
+    }
+
+    function pushToHistory(q) {
+      if (!q) return;
+      state.history.unshift(q);
+      if (state.history.length > 20) {
+        state.history.pop();
+      }
+    }
+
+    function pickNextQuestion() {
+      if (!state.currentDeck.length || state.deckIndex >= state.currentDeck.length) {
+        rebuildDeck();
+      }
+      const next = state.currentDeck[state.deckIndex];
+      state.deckIndex += 1;
+      if (state.currentQuestion) {
+        pushToHistory(state.currentQuestion);
+      }
+      state.currentQuestion = next;
+      renderQuestion(next);
+    }
+
+    function setStatus({ label, text, mode }) {
+      els.statusLabel.textContent = label;
+      els.statusText.textContent = text;
+      els.statusDot.classList.remove('busy', 'error');
+      if (mode === 'busy') {
+        els.statusDot.classList.add('busy');
+      } else if (mode === 'error') {
+        els.statusDot.classList.add('error');
+      }
+    }
+
+    function updateModeIndicator() {
+      let text = '';
+      switch (state.settings.gameMode) {
+        case GameMode.EVERYONE:
+          text = 'Mode: Everyone answers';
+          break;
+        case GameMode.PASS:
+          text = 'Mode: Pass the turn';
+          break;
+        case GameMode.TIMED_30:
+          text = 'Mode: 30-second spotlight';
+          break;
+        case GameMode.TIMED_60:
+          text = 'Mode: 60-second spotlight';
+          break;
+      }
+      els.modeLabel.textContent = text;
+    }
+
+    function renderQuestion(q) {
+      els.questionText.textContent = q.text;
+      els.tagRow.innerHTML = '';
+      q.categories.forEach(cat => {
+        const span = document.createElement('span');
+        span.className = 'tag-chip';
+        span.textContent = cat;
+        els.tagRow.appendChild(span);
+      });
+
+      if (q.source === QuestionSource.SEEDED) {
+        els.sourceDot.className = 'source-dot seeded';
+        els.sourceLabel.textContent = 'Seeded deck';
+      } else {
+        els.sourceDot.className = 'source-dot ai';
+        els.sourceLabel.textContent = 'AI-generated';
+      }
+
+      if (state.favorites.has(q.id)) {
+        els.favoriteBtn.textContent = '★';
+      } else {
+        els.favoriteBtn.textContent = '☆';
+      }
+
+      setStatus({
+        label: 'Ready',
+        text: 'Press Space or Next for a new card, or Generate to ask the AI for a fresh conversation starter.',
+        mode: 'idle'
+      });
+    }
+
+    function setGenerating(isOn) {
+      state.isGenerating = isOn;
+      els.generateBtn.disabled = isOn;
+      els.nextBtn.disabled = isOn;
+      if (isOn) {
+        setStatus({
+          label: 'Thinking…',
+          text: 'Asking the model for a new question. This may take a few seconds.',
+          mode: 'busy'
+        });
+      }
+    }
+
+    function obfuscatedApiKey() {
+      const b64 = 'c2stTklzX2o4WXJ0TXhRZ2Z1U0Rxd0dfdVNEcXdHUWVja0NGUEtjdnZjeDBGZXh1RzExNktUM0JfdmN4MEZleHVHMTE2S1QzQmxia0ZKejNIblh6TzBiMjE3Z1o3RmFGY0s0VWdwVXlGQ3dnWlRYT1ZnRDlQR1FB';
+      try {
+        const decoded = atob(b64);
+        const parts = decoded.split('_');
+        if (parts.length < 4) return '';
+        return parts[0] + parts[1] + parts[2] + parts[3];
+      } catch (e) {
+        return '';
+      }
+    }
+
+    function loadStoredQuestions() {
+      try {
+        const raw = localStorage.getItem('the-question-game:ai-questions');
+        if (!raw) return [];
+        const arr = JSON.parse(raw);
+        return Array.isArray(arr) ? arr.map((t, idx) => buildQuestionFromText(t, 'stored-' + idx, QuestionSource.AI)) : [];
+      } catch (e) {
+        return [];
+      }
+    }
+
+    function persistAIQuestionText(text) {
+      try {
+        const raw = localStorage.getItem('the-question-game:ai-questions');
+        const arr = raw ? JSON.parse(raw) : [];
+        arr.push(text);
+        localStorage.setItem('the-question-game:ai-questions', JSON.stringify(arr.slice(-200)));
+      } catch (e) {
+      }
+    }
+
+    async function generateQuestionWithAI() {
+      setGenerating(true);
+      try {
+        const basePrompt = `You are helping create questions for an in-person conversation game for people ages 13 and up.
+Each question must:
+- Be open-ended and invite storytelling or reflection.
+- Not be answerable with yes/no or a single word.
+- Be appropriate for most teens while still interesting to adults.
+- You may touch on sex, gender, identity, relationships, and violence in a thoughtful, non-graphic way, but avoid explicit sexual detail and avoid self-harm themes.
+- Stand alone without referencing previous questions.
+Return exactly ONE question, with no numbering, quotes, or extra commentary.`;
+
+        const apiKey = obfuscatedApiKey();
+
+        if (!apiKey) {
+          throw new Error('No OpenAI API key configured.');
+        }
+
+        const response = await fetch('https://api.openai.com/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + apiKey
+          },
+          body: JSON.stringify({
+            model: 'gpt-5.1',
+            messages: [
+              { role: 'system', content: 'You generate thoughtful, open-ended, safe but occasionally spicy conversation questions for teens and adults.' },
+              { role: 'user', content: basePrompt }
+            ],
+            temperature: 0.9,
+            max_tokens: 128
+          })
+        });
+
+        if (!response.ok) {
+          const text = await response.text();
+          throw new Error('API error: ' + text);
+        }
+
+        const data = await response.json();
+        const raw = (data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content) || '';
+        const cleaned = raw.trim().replace(/^"|"$/g, '');
+        if (!cleaned || textHasBannedContent(cleaned)) {
+          throw new Error('Model returned an empty or unsafe question.');
+        }
+
+        const q = buildQuestionFromText(cleaned, Date.now(), QuestionSource.AI);
+        state.allQuestions.push(q);
+        persistAIQuestionText(cleaned);
+        if (state.currentCategory === '__all__' || q.categories.includes(state.currentCategory)) {
+          state.currentDeck.splice(state.deckIndex, 0, q);
+        }
+
+        if (state.currentQuestion) {
+          pushToHistory(state.currentQuestion);
+        }
+        state.currentQuestion = q;
+        renderQuestion(q);
+      } catch (err) {
+        console.error(err);
+        setStatus({
+          label: 'Error',
+          text: 'Could not generate a safe question via the OpenAI API. Check your key or try again later.',
+          mode: 'error'
+        });
+      } finally {
+        setGenerating(false);
+      }
+    }
+
+    function handleCategoryChange(evt) {
+      state.currentCategory = evt.target.value || '__all__';
+      rebuildDeck();
+      pickNextQuestion();
+    }
+
+    function openSettingsModal() {
+      els.settingsBackdrop.classList.remove('hidden');
+      els.settingsSoftTaboo.checked = state.settings.allowSoftTaboo;
+      els.settingsDarkThemes.checked = state.settings.allowDarkThemes;
+      const chips = els.settingsSafetyChips.querySelectorAll('.chip-option');
+      chips.forEach(chip => {
+        chip.classList.toggle('active', chip.dataset.safety === state.settings.safetyLevel);
+      });
+      els.settingsGameMode.value = state.settings.gameMode;
+    }
+
+    function closeSettingsModal() {
+      els.settingsBackdrop.classList.add('hidden');
+    }
+
+    function applySettingsFromUI() {
+      state.settings.allowSoftTaboo = !!els.settingsSoftTaboo.checked;
+      state.settings.allowDarkThemes = !!els.settingsDarkThemes.checked;
+      const activeChip = els.settingsSafetyChips.querySelector('.chip-option.active');
+      if (activeChip && SafetyLevel[activeChip.dataset.safety.toUpperCase()]) {
+        state.settings.safetyLevel = SafetyLevel[activeChip.dataset.safety.toUpperCase()];
+      }
+      const gm = els.settingsGameMode.value;
+      if (GameMode[gm.toUpperCase()]) {
+        state.settings.gameMode = gm;
+      }
+      updateModeIndicator();
+      rebuildDeck();
+      pickNextQuestion();
+    }
+
+    function handleSafetyChipClick(evt) {
+      const target = evt.target;
+      if (!target.classList.contains('chip-option')) return;
+      const chips = els.settingsSafetyChips.querySelectorAll('.chip-option');
+      chips.forEach(chip => chip.classList.remove('active'));
+      target.classList.add('active');
+    }
+
+    function toggleFavorite() {
+      const q = state.currentQuestion;
+      if (!q) return;
+      if (state.favorites.has(q.id)) {
+        state.favorites.delete(q.id);
+      } else {
+        state.favorites.add(q.id);
+      }
+      renderQuestion(q);
+    }
+
+    function buildFavoritesCategoryDeck(allQuestions, settings) {
+      const favIds = state.favorites;
+      const favQs = allQuestions.filter(q => favIds.has(q.id));
+      return shuffle(favQs.filter(q => questionPassesSafety(q, settings)));
+    }
+
+    function startTimerForMode() {
+      if (state.timerId) {
+        clearInterval(state.timerId);
+        state.timerId = null;
+      }
+      let seconds = 0;
+      if (state.settings.gameMode === GameMode.TIMED_30) {
+        seconds = 30;
+      } else if (state.settings.gameMode === GameMode.TIMED_60) {
+        seconds = 60;
+      } else {
+        els.timerLabel.classList.add('hidden');
+        return;
+      }
+
+      state.timerRemaining = seconds;
+      els.timerLabel.classList.remove('hidden');
+      els.timerLabel.textContent = `⏱ ${seconds}s`;
+
+      state.timerId = setInterval(() => {
+        state.timerRemaining -= 1;
+        if (state.timerRemaining <= 0) {
+          clearInterval(state.timerId);
+          state.timerId = null;
+          els.timerLabel.textContent = '⏱ Time!';
+          return;
+        }
+        els.timerLabel.textContent = `⏱ ${state.timerRemaining}s`;
+      }, 1000);
+    }
+
+    function exportGeneratedQuestions() {
+      const aiQs = state.allQuestions.filter(q => q.source === QuestionSource.AI);
+      const seen = new Set();
+      const arr = [];
+      aiQs.forEach(q => {
+        if (!seen.has(q.text)) {
+          seen.add(q.text);
+          arr.push(q.text);
+        }
+      });
+      const content = 'const exportedQuestions = [\n' +
+        arr.map(t => '  ' + JSON.stringify(t) + ',').join('\n') +
+        '\n];\n';
+      const blob = new Blob([content], { type: 'text/javascript;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'question-game-export.js';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
+    function handleKeyUp(evt) {
+      if (evt.target && (evt.target.tagName === 'INPUT' || evt.target.tagName === 'TEXTAREA' || evt.target.tagName === 'SELECT')) {
+        return;
+      }
+      if (evt.code === 'Space' || evt.key === 'ArrowRight') {
+        evt.preventDefault();
+        pickNextQuestion();
+      } else if (evt.key === 'g' || evt.key === 'G') {
+        if (!state.isGenerating) {
+          generateQuestionWithAI();
+        }
+      }
+    }
+
+    function init() {
+      const stored = loadStoredQuestions();
+      state.allQuestions.push(...stored);
+      initCategories();
+      rebuildDeck();
+      pickNextQuestion();
+
+      updateModeIndicator();
+
+      els.nextBtn.addEventListener('click', () => {
+        pickNextQuestion();
+        startTimerForMode();
+      });
+
+      els.generateBtn.addEventListener('click', () => {
+        if (!state.isGenerating) {
+          generateQuestionWithAI();
+        }
+      });
+
+      els.categorySelect.addEventListener('change', handleCategoryChange);
+
+      els.favoriteBtn.addEventListener('click', toggleFavorite);
+      els.exportBtn.addEventListener('click', exportGeneratedQuestions);
+
+      els.settingsBtn.addEventListener('click', openSettingsModal);
+      els.settingsCloseBtn.addEventListener('click', closeSettingsModal);
+      els.settingsCancelBtn.addEventListener('click', closeSettingsModal);
+      els.settingsSaveBtn.addEventListener('click', () => {
+        applySettingsFromUI();
+        closeSettingsModal();
+      });
+      els.settingsSafetyChips.addEventListener('click', handleSafetyChipClick);
+
+      window.addEventListener('keyup', handleKeyUp);
+
+      setStatus({
+        label: 'Ready',
+        text: 'Use Space or Next for a new card. AI-generated questions are stored only in this browser, not in the HTML file itself.',
+        mode: 'idle'
+      });
+    }
+
+    window.addEventListener('DOMContentLoaded', init);
+  </script>
+</body>
+</html>
