@@ -204,33 +204,6 @@
       color: #e5e7eb;
     }
 
-    .version-tooltip {
-      position: absolute;
-      right: 0;
-      bottom: 130%;
-      max-width: 240px;
-      padding: 6px 8px;
-      border-radius: 8px;
-      border: 1px solid rgba(148, 163, 184, 0.5);
-      background: rgba(15, 23, 42, 0.98);
-      color: #e5e7eb;
-      font-size: 0.7rem;
-      line-height: 1.3;
-      box-shadow: 0 12px 30px rgba(15, 23, 42, 0.9);
-      opacity: 0;
-      pointer-events: none;
-      transform: translateY(4px);
-      transition: opacity 0.12s ease-out, transform 0.12s ease-out;
-      z-index: 50;
-    }
-
-    .version-help:hover .version-tooltip,
-    .version-help:focus-within .version-tooltip {
-      opacity: 1;
-      pointer-events: auto;
-      transform: translateY(0);
-    }
-
     .question-scroll {
       position: relative;
       overflow-y: auto;
@@ -713,10 +686,9 @@
           Status messages and mode indicators appear here.
         </div>
         <div class="status-extra">
-          <div class="source-pill" id="sourcePill">
+          <div class="source-pill" id="sourcePill" title="Seeded questions live in this HTML file. AI-generated questions are stored only in this browser and are not written back into the file.">
             <span class="source-dot seeded" id="sourceDot"></span>
             <span id="sourceLabel">Seeded deck</span>
-            <span class="source-tooltip">Seeded questions live in this HTML file. AI-generated questions are stored only in this browser and are not written back into the file.</span>
           </div>
           <span class="mode-label" id="modeLabel"></span>
           <span class="timer-pill hidden" id="timerLabel"></span>
