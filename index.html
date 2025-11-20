@@ -693,6 +693,33 @@
     </div>
   </div>
 
+  <div class="modal-backdrop hidden" id="apiKeyBackdrop">
+    <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="apiKeyTitle">
+      <div class="modal-header">
+        <div class="modal-title" id="apiKeyTitle">OpenAI API key</div>
+        <button type="button" class="btn-icon" id="apiKeyCloseBtn" aria-label="Close API key dialog">✕</button>
+      </div>
+      <div class="modal-section">
+        <p style="margin-bottom: 8px; font-size: 0.9rem; color: #e5e7eb;">
+          This key is used only in your browser to call the OpenAI API for generating new questions.
+        </p>
+        <div class="modal-row">
+          <label style="width: 100%;">
+            <span style="display:block; margin-bottom:4px;">API key (starts with <code>sk-</code>)</span>
+            <input type="password" id="apiKeyInput" style="width:100%; padding:8px 10px; border-radius:6px; border:1px solid #4b5563; background:#020617; color:#f9fafb;" />
+          </label>
+        </div>
+        <div class="modal-row">
+          <label><input type="checkbox" id="apiKeyRemember" checked /> Remember this key on this device</label>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn-ghost" id="apiKeyCancelBtn">Cancel</button>
+        <button type="button" class="btn-next" id="apiKeySaveBtn">Save key</button>
+      </div>
+    </div>
+  </div>
+
   <script>
     const QuestionSource = {
       SEEDED: 'seeded',
@@ -1208,7 +1235,13 @@
       settingsSoftTaboo: document.getElementById('settingsSoftTaboo'),
       settingsDarkThemes: document.getElementById('settingsDarkThemes'),
       settingsSafetyChips: document.getElementById('settingsSafetyChips'),
-      settingsGameMode: document.getElementById('settingsGameMode')
+      settingsGameMode: document.getElementById('settingsGameMode'),
+      apiKeyBackdrop: document.getElementById('apiKeyBackdrop'),
+      apiKeyInput: document.getElementById('apiKeyInput'),
+      apiKeyRemember: document.getElementById('apiKeyRemember'),
+      apiKeyCloseBtn: document.getElementById('apiKeyCloseBtn'),
+      apiKeyCancelBtn: document.getElementById('apiKeyCancelBtn'),
+      apiKeySaveBtn: document.getElementById('apiKeySaveBtn')
     };
 
     function initCategories() {
@@ -1324,34 +1357,45 @@
     }
 
     let cachedApiKey = null;
+    let pendingKeyResolvers = [];
+
+    function openApiKeyModal(prefillExisting) {
+      if (prefillExisting && cachedApiKey) {
+        els.apiKeyInput.value = cachedApiKey;
+      } else {
+        els.apiKeyInput.value = '';
+      }
+      els.apiKeyBackdrop.classList.remove('hidden');
+      els.apiKeyInput.focus();
+    }
+
+    function closeApiKeyModal() {
+      els.apiKeyBackdrop.classList.add('hidden');
+    }
+
+    function resolvePendingKey(value) {
+      pendingKeyResolvers.forEach(fn => fn(value));
+      pendingKeyResolvers = [];
+    }
 
     function getApiKeyFromUser() {
-      if (cachedApiKey) return cachedApiKey;
+      if (cachedApiKey) return Promise.resolve(cachedApiKey);
 
       try {
         const stored = localStorage.getItem('the-question-game:openai-api-key');
         if (stored) {
           cachedApiKey = stored;
-          return cachedApiKey;
+          return Promise.resolve(cachedApiKey);
         }
       } catch (e) {
         // Ignore storage errors and fall back to prompting.
       }
 
-      const key = window.prompt('Enter your OpenAI API key (sk-...) for The Question Game:', '');
-      if (!key) {
-        return '';
-      }
+      openApiKeyModal(false);
 
-      cachedApiKey = key.trim();
-
-      try {
-        localStorage.setItem('the-question-game:openai-api-key', cachedApiKey);
-      } catch (e) {
-        // If storage fails, still allow in-memory use for this session.
-      }
-
-      return cachedApiKey;
+      return new Promise(resolve => {
+        pendingKeyResolvers.push(resolve);
+      });
     }
 
     function loadStoredQuestions() {
@@ -1387,7 +1431,7 @@ Each question must:
 - Stand alone without referencing previous questions.
 Return exactly ONE question, with no numbering, quotes, or extra commentary.`;
 
-        const apiKey = getApiKeyFromUser();
+        const apiKey = await getApiKeyFromUser();
 
         if (!apiKey) {
           throw new Error('No OpenAI API key provided.');
@@ -1609,6 +1653,34 @@ Return exactly ONE question, with no numbering, quotes, or extra commentary.`;
         closeSettingsModal();
       });
       els.settingsSafetyChips.addEventListener('click', handleSafetyChipClick);
+
+      els.apiKeyCloseBtn.addEventListener('click', () => {
+        closeApiKeyModal();
+        resolvePendingKey('');
+      });
+      els.apiKeyCancelBtn.addEventListener('click', () => {
+        closeApiKeyModal();
+        resolvePendingKey('');
+      });
+      els.apiKeySaveBtn.addEventListener('click', () => {
+        const raw = els.apiKeyInput.value || '';
+        const key = raw.trim();
+        if (!key) {
+          closeApiKeyModal();
+          resolvePendingKey('');
+          return;
+        }
+        cachedApiKey = key;
+        try {
+          if (els.apiKeyRemember.checked) {
+            localStorage.setItem('the-question-game:openai-api-key', cachedApiKey);
+          }
+        } catch (e) {
+          // ignore storage errors
+        }
+        closeApiKeyModal();
+        resolvePendingKey(cachedApiKey);
+      });
 
       window.addEventListener('keyup', handleKeyUp);
 
