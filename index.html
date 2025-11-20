@@ -719,10 +719,10 @@
       </section>
     </main>
     <div class="version-cluster">
-      <div class="version-label">2025.11.19.1.0.0.3</div>
+      <div class="version-label">2025.11.19.1.0.0.4</div>
       <button type="button" class="version-help" aria-label="Keyboard and AI shortcuts">
         ?
-        <span class="version-tooltip">Press Space or the Next button for a new card. On desktop, press G to ask the AI for a fresh question.</span>
+        <span class="version-tooltip">Press Space or the Next button for a new card. On desktop, press G to ask the AI for a fresh question. Seeded questions live in this file, but AI-generated questions stay only in this browser.</span>
       </button>
     </div>
   </div>
@@ -1413,7 +1413,7 @@
 
       setStatus({
         label: 'Ready',
-        text: 'Press Space or Next for a new card, or Generate to ask the AI for a fresh conversation starter.',
+        text: 'Seeded questions live in this file. AI questions stay only in this browser.',
         mode: 'idle'
       });
     }
@@ -1771,7 +1771,7 @@ Return exactly ONE question, with no numbering, quotes, or extra commentary.`;
 
       setStatus({
         label: 'Ready',
-        text: 'Use Space or Next for a new card. AI-generated questions are stored only in this browser, not in the HTML file itself.',
+        text: 'Seeded questions live in this file. AI questions stay only in this browser.',
         mode: 'idle'
       });
     }
