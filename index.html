@@ -160,20 +160,75 @@
       pointer-events: none;
     }
 
-    .version-label {
+    .version-cluster {
       position: absolute;
-      right: 14px;
-      bottom: 8px;
+      right: 12px;
+      bottom: 6px;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.65rem;
+      color: rgba(148, 163, 184, 0.8);
+      z-index: 2;
+    }
+
+    .version-label {
       padding: 2px 8px;
       border-radius: 999px;
       border: 1px solid rgba(148, 163, 184, 0.28);
       background: rgba(15, 23, 42, 0.82);
-      font-size: 0.65rem;
-      color: rgba(148, 163, 184, 0.8);
       letter-spacing: 0.08em;
       text-transform: none;
       pointer-events: none;
       user-select: none;
+    }
+
+    .version-help {
+      position: relative;
+      border-radius: 999px;
+      border: 1px solid rgba(148, 163, 184, 0.4);
+      background: rgba(15, 23, 42, 0.9);
+      color: rgba(209, 213, 219, 0.9);
+      font-size: 0.7rem;
+      width: 20px;
+      height: 20px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0;
+      cursor: help;
+    }
+
+    .version-help:hover {
+      background: rgba(30, 64, 175, 0.5);
+      color: #e5e7eb;
+    }
+
+    .version-tooltip {
+      position: absolute;
+      right: 0;
+      bottom: 130%;
+      max-width: 240px;
+      padding: 6px 8px;
+      border-radius: 8px;
+      border: 1px solid rgba(148, 163, 184, 0.5);
+      background: rgba(15, 23, 42, 0.98);
+      color: #e5e7eb;
+      font-size: 0.7rem;
+      line-height: 1.3;
+      box-shadow: 0 12px 30px rgba(15, 23, 42, 0.9);
+      opacity: 0;
+      pointer-events: none;
+      transform: translateY(4px);
+      transition: opacity 0.12s ease-out, transform 0.12s ease-out;
+      z-index: 50;
+    }
+
+    .version-help:hover .version-tooltip,
+    .version-help:focus-within .version-tooltip {
+      opacity: 1;
+      pointer-events: auto;
+      transform: translateY(0);
     }
 
     .question-scroll {
@@ -612,10 +667,6 @@
         </div>
         <button type="button" class="btn-ghost settings-btn" id="settingsBtn">Settings</button>
       </div>
-      <p class="subtitle">
-        Deep, odd, and occasionally spicy prompts to spark real conversation.
-        Questions are open-ended by design - meant to be explored out loud, not answered in one word.
-      </p>
     </header>
 
     <main>
@@ -654,7 +705,7 @@
           <span id="statusLabel">Ready</span>
         </div>
         <div class="status-text" id="statusText">
-          Seeded questions only are stored in this file. AI-generated prompts exist only in this browser.
+          Seeded questions live in this file. AI questions stay only in this browser.
         </div>
         <div class="status-extra">
           <div class="source-pill" id="sourcePill">
@@ -667,7 +718,13 @@
         </div>
       </section>
     </main>
-    <div class="version-label">2025.11.19.1.0.0.2</div>
+    <div class="version-cluster">
+      <div class="version-label">2025.11.19.1.0.0.3</div>
+      <button type="button" class="version-help" aria-label="Keyboard and AI shortcuts">
+        ?
+        <span class="version-tooltip">Press Space or the Next button for a new card. On desktop, press G to ask the AI for a fresh question.</span>
+      </button>
+    </div>
   </div>
 
   <div class="modal-backdrop hidden" id="settingsBackdrop">
