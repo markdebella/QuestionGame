@@ -732,7 +732,7 @@
       </section>
     </main>
     <div class="version-cluster">
-      <div class="version-label">2025.11.19.1.0.0.8</div>
+      <div class="version-label">2025.11.20.1.0.0.9</div>
       <button type="button" class="version-help" aria-label="Keyboard and AI shortcuts">
         ?
         <span class="version-tooltip">Press Space or the Next button for a new card. On desktop, press G to ask the AI for a fresh question.</span>
@@ -1243,6 +1243,69 @@
       .filter(t => t && !textHasBannedContent(t))
       .map((t, idx) => buildQuestionFromText(t, idx, QuestionSource.SEEDED));
 
+    const styleNudges = [
+      'a surprising "what if" scenario that feels grounded in everyday life',
+      'a reflective memory from the past that still shapes who someone is now',
+      'a tension between two good options where there\'s no clear right answer',
+      'a small but meaningful decision that could quietly change someone\'s future',
+      'a tradeoff between comfort and growth',
+      'a moment where someone has to choose between honesty and politeness',
+      'a secret hope or dream that feels a bit embarrassing to admit out loud',
+      'a "sliding doors" alternate-timeline version of someone\'s life',
+      'a time when expectations clashed with reality in a surprising way',
+      'a question that starts light but invites a deeper follow-up',
+      'a playful hypothetical that could still reveal something real about a person',
+      'a scenario where values and convenience pull in opposite directions',
+      'a relationship moment that reveals what someone really cares about',
+      'a question about how someone has changed over the last few years',
+      'a fear that says something about what someone truly values',
+      'a moment of pride that most people wouldn\'t see from the outside',
+      'a "rules of your personal universe" type question (how someone thinks life should work)',
+      'a question about what someone is willing to be bad at while they learn',
+      'a silly or absurd setup that leads to a sincere answer',
+      'a scenario that asks what someone would protect first if things went wrong',
+      'a memory about being wrong and what changed because of it',
+      'a clash between what someone says they believe and what they actually do',
+      'a moment when someone realized they\'d grown up more than they thought',
+      'a question about how someone wants to be remembered by specific people',
+      'a low-stakes "would you rather" that secretly reveals deeper priorities',
+      'a moment of kindness that changed how someone saw the world',
+      'a question about an unspoken rule in their family, school, or friend group',
+      'a time when someone had to ask for help and what that felt like',
+      'a situation where someone broke a small rule and doesn\'t regret it',
+      'a question about what someone is most protective of in their identity',
+      'a conflict between fitting in and standing out',
+      'a time when someone surprised themselves in a good way',
+      'a decision that looked small in the moment but mattered later',
+      'a question about how technology has quietly changed someone\'s daily life',
+      'a fantasy or sci-fi style scenario used to explore real-world feelings',
+      'a question about money that feels safe but still honest',
+      'a moment when someone chose to walk away instead of pushing through',
+      'a question about how someone handles jealousy or comparison',
+      'a playful challenge to imagine an exaggerated version of themselves',
+      'a moment of awkwardness that later turned into a favorite story',
+      'a question about boundaries—where someone draws the line and why',
+      'a time when someone forgave or was forgiven, and what changed',
+      'a question about how someone wants to spend ordinary, unglamorous days',
+      'a scenario that asks what someone would teach if they had to teach one class',
+      'a question that invites someone to brag a little without feeling guilty',
+      'a time when someone felt truly seen or truly misunderstood',
+      'a question about how someone would redesign a small part of the world',
+      'a "choose your own adventure" fork where both paths say something about them',
+      'a question that treats humor as a way of coping, not avoiding',
+      'a gentle look at a taboo topic (without being graphic or self-harm related)'
+    ];
+
+    function pickRandomDistinct(arr, count) {
+      const copy = arr.slice();
+      const result = [];
+      while (copy.length && result.length < count) {
+        const idx = Math.floor(Math.random() * copy.length);
+        result.push(copy.splice(idx, 1)[0]);
+      }
+      return result;
+    }
+
     function questionPassesSafety(q, settings) {
       if (q.flags && q.flags.isSexual && !settings.allowSoftTaboo) {
         return false;
@@ -1516,6 +1579,13 @@
         const categoryName = state.currentCategory === '__all__' ? 'All categories' : state.currentCategory;
         const safety = state.settings.safetyLevel || SafetyLevel.BALANCED;
 
+        const styleHints = pickRandomDistinct(styleNudges, 3);
+        const styleHintsText = styleHints.map(h => `- ${h}`).join('\n');
+
+        const seededPool = seededQuestionsText.filter(t => t && !textHasBannedContent(t));
+        const exampleSeeds = pickRandomDistinct(seededPool, 3);
+        const examplesText = exampleSeeds.map((q, idx) => `${idx + 1}. ${q}`).join('\n');
+
         const basePrompt = `You are helping create questions for an in-person conversation game for people ages 13 and up.
 The game uses loose themes like Identity & Childhood, Family & Relationships, Love & Intimacy, Ethics & Regrets, Fears & Vulnerability, Beliefs & Philosophy, Future & Dreams, Work & Money, Humor & Silly, Hypotheticals & Storytelling, Taboo (Soft), Media & Pop Culture, Body & Appearance, and Random & Other.
 
@@ -1529,6 +1599,12 @@ Each question must:
 - You may touch on sex, gender, identity, relationships, and violence in a thoughtful, non-graphic way, but avoid explicit sexual detail and avoid self-harm themes.
 - Stand alone without referencing previous questions.
 - Feel meaningfully different in focus from a typical "what are you most afraid of" or "who do you have a crush on" style question.
+
+For this question, lean slightly toward the following style hints without mentioning them out loud to the player:
+${styleHintsText}
+
+Here are three example questions to use only as loose inspiration for tone and depth. Do NOT copy their wording, structure, or specific scenario. Instead, create a new, distinct question that fits the rules above:
+${examplesText}
 
 Within the requested category, vary the kind of situation or angle you ask about (for example: choices, memories, tensions, what-ifs, tradeoffs, secret wishes, moral dilemmas, playful hypotheticals) instead of repeating one pattern.
 Use the requested category as a gentle theme (especially if it is not "All categories") but you do NOT need to mention the category name itself in the wording.
