@@ -1867,6 +1867,7 @@ Return exactly ONE question, with no numbering, quotes, or extra commentary.`;
     function openSettingsModal(options) {
       const opts = options || {};
       els.settingsBackdrop.classList.remove('hidden');
+      els.settingsBackdrop.style.display = 'flex';
       els.settingsSoftTaboo.checked = state.settings.allowSoftTaboo;
       els.settingsDarkThemes.checked = state.settings.allowDarkThemes;
       const chips = els.settingsSafetyChips.querySelectorAll('.chip-option');
@@ -1893,6 +1894,7 @@ Return exactly ONE question, with no numbering, quotes, or extra commentary.`;
 
     function closeSettingsModal() {
       els.settingsBackdrop.classList.add('hidden');
+      els.settingsBackdrop.style.display = 'none';
     }
 
     function applySettingsFromUI() {
