@@ -766,7 +766,7 @@
       </section>
     </main>
     <div class="version-cluster">
-      <div class="version-label">2025.12.05.1.0.1.2</div>
+      <div class="version-label">2025.12.05.1.0.1.3</div>
       <button type="button" class="version-help" aria-label="Keyboard and AI shortcuts">
         ?
         <span class="version-tooltip">Press Space or the Next button for a new card. On desktop, press G to ask the AI for a fresh question.</span>
@@ -1931,36 +1931,6 @@ Return exactly ONE question, with no numbering, quotes, or extra commentary.`;
     }
 
     function handleSafetyChipClick(evt) {
-      const target = evt.target;
-      if (!target.classList.contains('chip-option')) return;
-      const chips = els.settingsSafetyChips.querySelectorAll('.chip-option');
-      chips.forEach(chip => chip.classList.remove('active'));
-      target.classList.add('active');
-    }
-
-    function toggleFavorite() {
-      const q = state.currentQuestion;
-      if (!q) return;
-      if (state.favorites.has(q.id)) {
-        state.favorites.delete(q.id);
-      } else {
-        state.favorites.add(q.id);
-      }
-      renderQuestion(q);
-    }
-
-    function buildFavoritesCategoryDeck(allQuestions, settings) {
-      const favIds = state.favorites;
-      const favQs = allQuestions.filter(q => favIds.has(q.id));
-      return shuffle(favQs.filter(q => questionPassesSafety(q, settings)));
-    }
-
-    function initCategories() {
-      const catSet = new Set();
-      state.allQuestions.forEach(q => q.categories.forEach(c => catSet.add(c)));
-      const categories = Array.from(catSet).sort((a, b) => a.localeCompare(b));
-      for (const cat of categories) {
-        const opt = document.createElement('option');
         opt.value = cat;
         opt.textContent = cat;
         els.categorySelect.appendChild(opt);
