@@ -682,10 +682,6 @@
         margin-top: 6px;
         justify-content: flex-end;
       }
-
-      #exportBtn {
-        display: none;
-      }
     }
   </style>
 </head>
@@ -745,7 +741,6 @@
             <span class="source-dot seeded" id="sourceDot"></span>
             <span id="sourceLabel">Seeded deck</span>
           </div>
-          <button type="button" class="btn-ghost" id="exportBtn">Export AI deck</button>
           <button type="button" class="btn-icon" id="ttsToggleBtn" aria-label="Toggle question speech" title="Read questions aloud" data-state="off">
             <svg class="tts-icon tts-icon-off" viewBox="0 0 24 24" aria-hidden="true">
               <path d="M4 9v6h3l4 3V6L7 9H4z"></path>
@@ -766,7 +761,7 @@
       </section>
     </main>
     <div class="version-cluster">
-      <div class="version-label">2025.12.05.1.0.1.10</div>
+      <div class="version-label">2025.12.05.1.0.1.12</div>
       <button type="button" class="version-help" aria-label="Keyboard and AI shortcuts">
         ?
         <span class="version-tooltip">Press Space or the Next button for a new card. On desktop, press G to ask the AI for a fresh question.</span>
@@ -1049,68 +1044,6 @@
       "If you could outsource one emotional task in your life to a very kind assistant, what would you ask them to handle?",
       "What is a place you’ve never been that still feels oddly nostalgic or familiar to you?",
       "When do you feel most like the main character in your own story, and what’s happening around you?",
-      "What is something you wish more people understood about your culture, background, or family?",
-      "If you had to teach a short class on something you care about, what topic would you pick and why?",
-      "What is a memory that you replay so often it almost feels like a movie scene in your head?",
-      "When do you feel most torn between what you want and what other people expect from you?",
-      "What is a time when you handled a conflict better than you thought you could, and what did you do differently?",
-      "If your life had chapters with names, what would you call the chapter you’re in right now?",
-      "What is something you’ve outgrown that you’re secretly proud of leaving behind?",
-      "When do you feel most creative, and what tends to spark that feeling?",
-      "What is a tiny luxury that makes your day feel noticeably better when you have it?",
-      "If you could instantly learn how to do one emotionally difficult thing, what would you choose and why?",
-      "What is a moment when you felt genuinely brave, even if nobody else noticed it?",
-      "When do you feel the most pressure to compare yourself to others, and how does it affect you?",
-      "What is a piece of advice you’ve received that hits differently now than when you first heard it?",
-      "If you could invite three fictional characters to hang out for an afternoon, who would you choose and what would you do?",
-      "What is a memory that makes you smile and wince at the same time, and why?",
-      "When do you feel like you’re “too much,” and when do you feel like you’re “not enough”?",
-      "What is a risk you took that didn’t work out, but you’re still glad you tried?",
-      "If your phone could show you a true pie chart of how you spend your time, what slice would surprise you most?",
-      "What is a fear about the future that you rarely say out loud, and what helps calm it down?",
-      "When have you felt most protective of your privacy, and what triggered that feeling?",
-      "What is a way you try to make other people’s lives a little easier without drawing attention to it?",
-      "If you could press pause on one part of your life to appreciate it longer, what would you freeze and why?",
-      "What is a compliment you struggle to believe when you hear it, and why is it hard to accept?",
-      "When do you feel like you’re carrying a secret weight that other people can’t see?",
-      "What is a tradition, ritual, or routine you’d like to start for your future self or future family?",
-      "If you could borrow one trait from a friend or family member for a week, whose trait would you borrow and why?",
-      "What is a moment you realized an adult in your life was more human and flawed than you thought?",
-      "When do you feel the most confident in your own opinions, and when do you tend to second-guess yourself?",
-      "What is a story from your life that you wish more people knew, and what stops you from telling it more often?",
-      "If someone made a gentle documentary about your life this year, what would the main theme or title be?",
-      "What is a way your sense of humor has helped you get through something difficult?",
-      "When do you feel like the “responsible one,” and how do you feel about that role?",
-      "What is something about your past that you used to hide but now feel more comfortable sharing?",
-      "If you could spend one day with your grandparents or older relatives at your current age, what would you want to ask them?",
-      "What is a choice you made mainly to avoid regret, and do you still think it was the right call?",
-      "When do you feel most comfortable being vulnerable, and what conditions make that possible?",
-      "What is a habit or routine you’d like to build that feels just out of reach, and what keeps getting in the way?",
-      "If you could write a note to yourself to be delivered five years from now, what’s one thing you’d want to remind future you about?",
-      "What is a way your definition of success has shifted over the last few years?",
-      "When do you feel most like quitting something, and what usually convinces you to keep going or walk away?",
-      "What is something you’ve learned about friendship that you wish more people talked about honestly?",
-      "If your life right now had a tagline on a movie poster, what would it say?",
-      "What is a small change you made in your life that ended up having a surprisingly big impact?",
-      "When do you feel most aware of time passing, and what emotions come with that awareness?",
-      "What is a way you’ve surprised yourself with your own resilience, even if it wasn’t pretty?",
-      "If you could have a monthly check-in with any version of yourself from the past, which age would you choose and what would you talk about?",
-      "What is something you’re currently learning to be kinder to yourself about?",
-      "When do you feel most disrespected, and how do you usually respond in those situations?",
-      "What is a value you try to live by even when it would be easier to ignore it?",
-      "If you could ask one honest question to everyone in this room and they had to answer, what would you want to know?",
-      "What is a time when you decided to give someone a second chance, and how did it turn out?",
-      "When do you feel most drawn to nostalgia, and what do you usually find yourself remembering?",
-      "What is something you’re quietly excited about right now that you haven’t told many people?",
-      "If you had to choose one area of your life to invest more energy into this year, what would it be and why?",
-      "What is a time when things didn’t go to plan, but the outcome ended up being better than your original idea?",
-      "When do you feel the most pressure to look like you have everything figured out, and what would change if you dropped that act?",
-      "What is a relationship in your life that taught you a hard lesson you’re now grateful for?",
-      "If you could temporarily borrow someone else’s courage for one conversation, who would you talk to and about what?",
-      "What is a way your priorities have shifted recently, and what pushed that change?",
-      "When do you feel most at home, and is it tied to a place, a person, or a feeling?",
-      "What is a belief you’re still wrestling with and haven’t fully decided how you feel about yet?",
-      "If you could design a small ritual for this group to repeat every time you meet, what would it be and why?",
       "What is something that used to feel like a big deal that now barely bothers you, and what changed?",
       "When do you feel the most proud of how you treat other people, and what are you doing in those moments?",
       "What is an aspect of your identity that you didn’t always embrace but feel more grounded in now?",
@@ -1356,7 +1289,6 @@
       statusLabel: document.getElementById('statusLabel'),
       statusText: document.getElementById('statusText'),
       favoriteBtn: document.getElementById('favoriteBtn'),
-      exportBtn: document.getElementById('exportBtn'),
       settingsBtn: document.getElementById('settingsBtn'),
       settingsBackdrop: document.getElementById('settingsBackdrop'),
       settingsCloseBtn: document.getElementById('settingsCloseBtn'),
