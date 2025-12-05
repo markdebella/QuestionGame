@@ -2104,21 +2104,31 @@ Return exactly ONE question, with no numbering, quotes, or extra commentary.`;
       els.favoriteBtn.addEventListener('click', toggleFavorite);
       els.exportBtn.addEventListener('click', exportGeneratedQuestions);
 
-      els.settingsBtn.addEventListener('click', () => openSettingsModal());
-      els.settingsCloseBtn.addEventListener('click', () => {
-        closeSettingsModal();
-        resolvePendingKey('');
-      });
-      els.settingsCancelBtn.addEventListener('click', () => {
-        closeSettingsModal();
-        resolvePendingKey('');
-      });
-      els.settingsSaveBtn.addEventListener('click', () => {
-        applySettingsFromUI();
-        closeSettingsModal();
-        resolvePendingKey(cachedApiKey || '');
-      });
-      els.settingsSafetyChips.addEventListener('click', handleSafetyChipClick);
+      if (els.settingsBtn) {
+        els.settingsBtn.addEventListener('click', () => openSettingsModal());
+      }
+      if (els.settingsCloseBtn) {
+        els.settingsCloseBtn.addEventListener('click', () => {
+          closeSettingsModal();
+          resolvePendingKey('');
+        });
+      }
+      if (els.settingsCancelBtn) {
+        els.settingsCancelBtn.addEventListener('click', () => {
+          closeSettingsModal();
+          resolvePendingKey('');
+        });
+      }
+      if (els.settingsSaveBtn) {
+        els.settingsSaveBtn.addEventListener('click', () => {
+          applySettingsFromUI();
+          closeSettingsModal();
+          resolvePendingKey(cachedApiKey || '');
+        });
+      }
+      if (els.settingsSafetyChips) {
+        els.settingsSafetyChips.addEventListener('click', handleSafetyChipClick);
+      }
 
       if (els.settingsTtsSampleBtn) {
         els.settingsTtsSampleBtn.addEventListener('click', () => {
