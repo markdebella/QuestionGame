@@ -766,7 +766,7 @@
       </section>
     </main>
     <div class="version-cluster">
-      <div class="version-label">2025.11.20.1.0.1.4</div>
+      <div class="version-label">2025.12.05.1.0.1.0</div>
       <button type="button" class="version-help" aria-label="Keyboard and AI shortcuts">
         ?
         <span class="version-tooltip">Press Space or the Next button for a new card. On desktop, press G to ask the AI for a fresh question.</span>
@@ -808,37 +808,19 @@
           </select>
           <button type="button" class="btn-ghost" id="settingsTtsSampleBtn">Play sample</button>
         </div>
+        <div class="modal-row">
+          <label style="width: 100%;">
+            <span style="display:block; margin-bottom:4px;">OpenAI API key (starts with <code>sk-</code>)</span>
+            <input type="password" id="settingsApiKeyInput" style="width:100%; padding:8px 10px; border-radius:6px; border:1px solid #4b5563; background:#020617; color:#f9fafb;" autocomplete="off" />
+          </label>
+        </div>
+        <div class="modal-row">
+          <label><input type="checkbox" id="settingsApiKeyRemember" checked /> Remember this key on this device</label>
+        </div>
       </div>
       <div class="modal-footer">
         <button type="button" class="btn-ghost" id="settingsCancelBtn">Cancel</button>
         <button type="button" class="btn-next" id="settingsSaveBtn">Apply</button>
-      </div>
-    </div>
-  </div>
-
-  <div class="modal-backdrop hidden" id="apiKeyBackdrop">
-    <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="apiKeyTitle">
-      <div class="modal-header">
-        <div class="modal-title" id="apiKeyTitle">OpenAI API key</div>
-        <button type="button" class="btn-icon" id="apiKeyCloseBtn" aria-label="Close API key dialog">✕</button>
-      </div>
-      <div class="modal-section">
-        <p style="margin-bottom: 8px; font-size: 0.9rem; color: #e5e7eb;">
-          This key is used only in your browser to call the OpenAI API for generating new questions.
-        </p>
-        <div class="modal-row">
-          <label style="width: 100%;">
-            <span style="display:block; margin-bottom:4px;">API key (starts with <code>sk-</code>)</span>
-            <input type="password" id="apiKeyInput" style="width:100%; padding:8px 10px; border-radius:6px; border:1px solid #4b5563; background:#020617; color:#f9fafb;" />
-          </label>
-        </div>
-        <div class="modal-row">
-          <label><input type="checkbox" id="apiKeyRemember" checked /> Remember this key on this device</label>
-        </div>
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn-ghost" id="apiKeyCancelBtn">Cancel</button>
-        <button type="button" class="btn-next" id="apiKeySaveBtn">Save key</button>
       </div>
     </div>
   </div>
@@ -1084,7 +1066,7 @@
       "If your boat sank and you reached the last lifeboat, who would you insist on having with you and why?",
       "When did you stop believing in things like Santa, the Tooth Fairy, or monsters under the bed, and what replaced those beliefs for you?",
       "When something bad happens, do you tend to believe that things will work out eventually or not, and why?",
-      "If you had to choose another culture or country to be part of, which would you choose and what draws you to it?",
+      "If you could choose another culture or country to be part of, which would you choose and what draws you to it?",
       "If you could be any mythical creature, what would you choose and what kind of life would you live?",
       "At what point do you personally consider someone to be ‘over the hill,’ and what does that phrase really mean to you?",
       "What is the worst combination of foods you’ve ever eaten together, accidentally or on purpose?",
@@ -1568,12 +1550,8 @@
       settingsSafetyChips: document.getElementById('settingsSafetyChips'),
       settingsTtsVoice: document.getElementById('settingsTtsVoice'),
       settingsTtsSampleBtn: document.getElementById('settingsTtsSampleBtn'),
-      apiKeyBackdrop: document.getElementById('apiKeyBackdrop'),
-      apiKeyInput: document.getElementById('apiKeyInput'),
-      apiKeyRemember: document.getElementById('apiKeyRemember'),
-      apiKeyCloseBtn: document.getElementById('apiKeyCloseBtn'),
-      apiKeyCancelBtn: document.getElementById('apiKeyCancelBtn'),
-      apiKeySaveBtn: document.getElementById('apiKeySaveBtn'),
+      settingsApiKeyInput: document.getElementById('settingsApiKeyInput'),
+      settingsApiKeyRemember: document.getElementById('settingsApiKeyRemember'),
       ttsToggleBtn: document.getElementById('ttsToggleBtn'),
       ttsReplayBtn: document.getElementById('ttsReplayBtn')
     };
@@ -1614,147 +1592,11 @@
       els.ttsReplayBtn.classList.toggle('hidden', !canReplay);
     }
 
-    function initCategories() {
-      const catSet = new Set();
-      state.allQuestions.forEach(q => q.categories.forEach(c => catSet.add(c)));
-      const categories = Array.from(catSet).sort((a, b) => a.localeCompare(b));
-      for (const cat of categories) {
-        const opt = document.createElement('option');
-        opt.value = cat;
-        opt.textContent = cat;
-        els.categorySelect.appendChild(opt);
-      }
-    }
-
-    function rebuildDeck() {
-      state.currentDeck = shuffle(buildDeckByCategory(state.allQuestions, state.currentCategory, state.settings));
-      state.deckIndex = 0;
-    }
-
-    function pushToHistory(q) {
-      if (!q) return;
-      state.history.unshift(q);
-      if (state.history.length > 20) {
-        state.history.pop();
-      }
-    }
-
-    function pickNextQuestion() {
-      if (!state.currentDeck.length || state.deckIndex >= state.currentDeck.length) {
-        rebuildDeck();
-      }
-      const next = state.currentDeck[state.deckIndex];
-      state.deckIndex += 1;
-      if (state.currentQuestion) {
-        pushToHistory(state.currentQuestion);
-      }
-      presentQuestion(next);
-    }
-
-    function setStatus({ label, text, mode }) {
-      els.statusLabel.textContent = label;
-      els.statusText.textContent = text;
-      els.statusDot.classList.remove('busy', 'error');
-      if (mode === 'busy') {
-        els.statusDot.classList.add('busy');
-      } else if (mode === 'error') {
-        els.statusDot.classList.add('error');
-      }
-    }
-
-    function renderQuestion(q) {
-      els.questionText.textContent = q.text;
-      els.tagRow.innerHTML = '';
-      q.categories.forEach(cat => {
-        const span = document.createElement('span');
-        span.className = 'tag-chip';
-        span.textContent = cat;
-        els.tagRow.appendChild(span);
-      });
-
-      if (q.source === QuestionSource.SEEDED) {
-        els.sourceDot.className = 'source-dot seeded';
-        els.sourceLabel.textContent = 'Seeded deck';
-      } else {
-        els.sourceDot.className = 'source-dot ai';
-        els.sourceLabel.textContent = 'AI-generated';
-      }
-
-      if (state.favorites.has(q.id)) {
-        els.favoriteBtn.textContent = '★';
-      } else {
-        els.favoriteBtn.textContent = '☆';
-      }
-      setStatus({
-        label: 'Ready',
-        text: '',
-        mode: 'idle'
-      });
-
-      updateTtsUI();
-    }
-
-    function presentQuestion(q) {
-      if (!q) return;
-
-      state.currentQuestion = q;
-      state.lastSpokenText = q.text;
-      updateTtsUI();
-
-      if (!state.speechEnabled) {
-        renderQuestion(q);
-        return;
-      }
-
-      setStatus({
-        label: 'Thinking…',
-        text: '',
-        mode: 'busy'
-      });
-
-      speakTextWithOpenAI(q.text)
-        .then(() => {
-          renderQuestion(q);
-        })
-        .catch(() => {
-          renderQuestion(q);
-        });
-    }
-
-    function setGenerating(isOn) {
-      state.isGenerating = isOn;
-      els.generateBtn.disabled = isOn;
-      els.nextBtn.disabled = isOn;
-      if (isOn) {
-        setStatus({
-          label: 'Thinking…',
-          text: '',
-          mode: 'busy'
-        });
-        els.statusPill.title = 'Asking the model for a new question. This may take a few seconds.';
-      } else {
-        els.statusPill.title = '';
-      }
-    }
-
     let cachedApiKey = null;
     let pendingKeyResolvers = [];
 
-    function openApiKeyModal(prefillExisting) {
-      if (prefillExisting && cachedApiKey) {
-        els.apiKeyInput.value = cachedApiKey;
-      } else {
-        els.apiKeyInput.value = '';
-      }
-      els.apiKeyBackdrop.classList.remove('hidden');
-      els.apiKeyInput.focus();
-    }
-
-    function closeApiKeyModal() {
-      els.apiKeyBackdrop.classList.add('hidden');
-    }
-
     function resolvePendingKey(value) {
+      if (!pendingKeyResolvers.length) return;
       pendingKeyResolvers.forEach(fn => fn(value));
       pendingKeyResolvers = [];
     }
@@ -1772,7 +1614,7 @@
         // Ignore storage errors and fall back to prompting.
       }
 
-      openApiKeyModal(false);
+      openSettingsModal({ focusApiKey: true });
 
       return new Promise(resolve => {
         pendingKeyResolvers.push(resolve);
@@ -1822,6 +1664,7 @@ Overall vibe setting is: ${safety}.
 Each question must:
 - Be open-ended and invite storytelling or reflection.
 - Not be answerable with yes/no or a single word.
+- Not be a "would you rather" or simple choice between X number of choices question.
 - Be appropriate for most teens while still interesting to adults.
 - You may touch on sex, gender, identity, relationships, and violence in a thoughtful, non-graphic way, but avoid explicit sexual detail and avoid self-harm themes.
 - Stand alone without referencing previous questions.
@@ -2005,13 +1848,24 @@ Return exactly ONE question, with no numbering, quotes, or extra commentary.`;
       speakTextWithOpenAI(state.lastSpokenText);
     }
 
-    function handleCategoryChange(evt) {
-      state.currentCategory = evt.target.value || '__all__';
-      rebuildDeck();
-      pickNextQuestion();
+    function setGenerating(isOn) {
+      state.isGenerating = isOn;
+      els.generateBtn.disabled = isOn;
+      els.nextBtn.disabled = isOn;
+      if (isOn) {
+        setStatus({
+          label: 'Thinking…',
+          text: '',
+          mode: 'busy'
+        });
+        els.statusPill.title = 'Asking the model for a new question. This may take a few seconds.';
+      } else {
+        els.statusPill.title = '';
+      }
     }
 
-    function openSettingsModal() {
+    function openSettingsModal(options) {
+      const opts = options || {};
       els.settingsBackdrop.classList.remove('hidden');
       els.settingsSoftTaboo.checked = state.settings.allowSoftTaboo;
       els.settingsDarkThemes.checked = state.settings.allowDarkThemes;
@@ -2021,6 +1875,19 @@ Return exactly ONE question, with no numbering, quotes, or extra commentary.`;
       });
       if (els.settingsTtsVoice) {
         els.settingsTtsVoice.value = state.settings.ttsVoice || 'alloy';
+      }
+      if (els.settingsApiKeyInput) {
+        try {
+          const stored = localStorage.getItem('the-question-game:openai-api-key');
+          els.settingsApiKeyInput.value = stored ? stored : (cachedApiKey || '');
+        } catch (e) {
+          els.settingsApiKeyInput.value = cachedApiKey || '';
+        }
+      }
+      if (opts.focusApiKey && els.settingsApiKeyInput) {
+        setTimeout(() => {
+          els.settingsApiKeyInput.focus();
+        }, 0);
       }
     }
 
@@ -2042,6 +1909,19 @@ Return exactly ONE question, with no numbering, quotes, or extra commentary.`;
           // Clear cached TTS so the next playback uses the new voice
           revokeTtsUrl();
           ttsCachedForText = '';
+        }
+      }
+      if (els.settingsApiKeyInput) {
+        const raw = els.settingsApiKeyInput.value || '';
+        const key = raw.trim();
+        if (key) {
+          cachedApiKey = key;
+          try {
+            if (!els.settingsApiKeyRemember || els.settingsApiKeyRemember.checked) {
+              localStorage.setItem('the-question-game:openai-api-key', cachedApiKey);
+            }
+          } catch (e) {
+          }
         }
       }
       rebuildDeck();
@@ -2073,29 +1953,119 @@ Return exactly ONE question, with no numbering, quotes, or extra commentary.`;
       return shuffle(favQs.filter(q => questionPassesSafety(q, settings)));
     }
 
-    
-
-    function exportGeneratedQuestions() {
-      const aiQs = state.allQuestions.filter(q => q.source === QuestionSource.AI);
-      const seen = new Set();
-      const arr = [];
-      aiQs.forEach(q => {
-        if (!seen.has(q.text)) {
-          seen.add(q.text);
-          arr.push(q.text);
-        }
-      });
-      const content = JSON.stringify(arr, null, 2);
-      const blob = new Blob([content], { type: 'application/json;charset=utf-8' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = 'question-game-export.json';
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
+    function initCategories() {
+      const catSet = new Set();
+      state.allQuestions.forEach(q => q.categories.forEach(c => catSet.add(c)));
+      const categories = Array.from(catSet).sort((a, b) => a.localeCompare(b));
+      for (const cat of categories) {
+        const opt = document.createElement('option');
+        opt.value = cat;
+        opt.textContent = cat;
+        els.categorySelect.appendChild(opt);
+      }
     }
+
+    function rebuildDeck() {
+      state.currentDeck = shuffle(buildDeckByCategory(state.allQuestions, state.currentCategory, state.settings));
+      state.deckIndex = 0;
+    }
+
+    function pushToHistory(q) {
+      if (!q) return;
+      state.history.unshift(q);
+      if (state.history.length > 20) {
+        state.history.pop();
+      }
+    }
+
+    function pickNextQuestion() {
+      if (!state.currentDeck.length || state.deckIndex >= state.currentDeck.length) {
+        rebuildDeck();
+      }
+      const next = state.currentDeck[state.deckIndex];
+      state.deckIndex += 1;
+      if (state.currentQuestion) {
+        pushToHistory(state.currentQuestion);
+      }
+      presentQuestion(next);
+    }
+
+    function setStatus({ label, text, mode }) {
+      els.statusLabel.textContent = label;
+      els.statusText.textContent = text;
+      els.statusDot.classList.remove('busy', 'error');
+      if (mode === 'busy') {
+        els.statusDot.classList.add('busy');
+      } else if (mode === 'error') {
+        els.statusDot.classList.add('error');
+      }
+    }
+
+    function renderQuestion(q) {
+      els.questionText.textContent = q.text;
+      els.tagRow.innerHTML = '';
+      q.categories.forEach(cat => {
+        const span = document.createElement('span');
+        span.className = 'tag-chip';
+        span.textContent = cat;
+        els.tagRow.appendChild(span);
+      });
+
+      if (q.source === QuestionSource.SEEDED) {
+        els.sourceDot.className = 'source-dot seeded';
+        els.sourceLabel.textContent = 'Seeded deck';
+      } else {
+        els.sourceDot.className = 'source-dot ai';
+        els.sourceLabel.textContent = 'AI-generated';
+      }
+
+      if (state.favorites.has(q.id)) {
+        els.favoriteBtn.textContent = '★';
+      } else {
+        els.favoriteBtn.textContent = '☆';
+      }
+      setStatus({
+        label: 'Ready',
+        text: '',
+        mode: 'idle'
+      });
+
+      updateTtsUI();
+    }
+
+    function presentQuestion(q) {
+      if (!q) return;
+
+      state.currentQuestion = q;
+      state.lastSpokenText = q.text;
+      updateTtsUI();
+
+      if (!state.speechEnabled) {
+        renderQuestion(q);
+        return;
+      }
+
+      setStatus({
+        label: 'Thinking…',
+        text: '',
+        mode: 'busy'
+      });
+
+      speakTextWithOpenAI(q.text)
+        .then(() => {
+          renderQuestion(q);
+        })
+        .catch(() => {
+          renderQuestion(q);
+        });
+    }
+
+    function handleCategoryChange(evt) {
+      state.currentCategory = evt.target.value || '__all__';
+      rebuildDeck();
+      pickNextQuestion();
+    }
+
     function handleKeyUp(evt) {
       if (evt.target && (evt.target.tagName === 'INPUT' || evt.target.tagName === 'TEXTAREA' || evt.target.tagName === 'SELECT')) {
         return;
@@ -2134,12 +2104,19 @@ Return exactly ONE question, with no numbering, quotes, or extra commentary.`;
       els.favoriteBtn.addEventListener('click', toggleFavorite);
       els.exportBtn.addEventListener('click', exportGeneratedQuestions);
 
-      els.settingsBtn.addEventListener('click', openSettingsModal);
-      els.settingsCloseBtn.addEventListener('click', closeSettingsModal);
-      els.settingsCancelBtn.addEventListener('click', closeSettingsModal);
+      els.settingsBtn.addEventListener('click', () => openSettingsModal());
+      els.settingsCloseBtn.addEventListener('click', () => {
+        closeSettingsModal();
+        resolvePendingKey('');
+      });
+      els.settingsCancelBtn.addEventListener('click', () => {
+        closeSettingsModal();
+        resolvePendingKey('');
+      });
       els.settingsSaveBtn.addEventListener('click', () => {
         applySettingsFromUI();
         closeSettingsModal();
+        resolvePendingKey(cachedApiKey || '');
       });
       els.settingsSafetyChips.addEventListener('click', handleSafetyChipClick);
 
@@ -2148,34 +2125,6 @@ Return exactly ONE question, with no numbering, quotes, or extra commentary.`;
           speakVoiceSample();
         });
       }
-
-      els.apiKeyCloseBtn.addEventListener('click', () => {
-        closeApiKeyModal();
-        resolvePendingKey('');
-      });
-      els.apiKeyCancelBtn.addEventListener('click', () => {
-        closeApiKeyModal();
-        resolvePendingKey('');
-      });
-      els.apiKeySaveBtn.addEventListener('click', () => {
-        const raw = els.apiKeyInput.value || '';
-        const key = raw.trim();
-        if (!key) {
-          closeApiKeyModal();
-          resolvePendingKey('');
-          return;
-        }
-        cachedApiKey = key;
-        try {
-          if (els.apiKeyRemember.checked) {
-            localStorage.setItem('the-question-game:openai-api-key', cachedApiKey);
-          }
-        } catch (e) {
-          // ignore storage errors
-        }
-        closeApiKeyModal();
-        resolvePendingKey(cachedApiKey);
-      });
 
       if (els.ttsToggleBtn) {
         els.ttsToggleBtn.addEventListener('click', () => {
